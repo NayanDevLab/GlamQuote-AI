@@ -30,8 +30,13 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env files (only the .env.example templates are committed)
+.env
+.env.*
+!.env.example
+
+# smoke-test output (may contain real result images)
+.smoke/
 
 # typescript
 *.tsbuildinfo
@@ -41,3 +46,5 @@ example
 # generated native folders
 /ios
 /android
+
+/design

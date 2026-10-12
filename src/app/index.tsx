@@ -1,98 +1,77 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useEffect } from 'react';
+import { Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { SplashMirror } from '@/components/illustrations';
+import { Wordmark } from '@/components/ui/brand';
+import { useAppStore } from '@/state/app-store';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+// Design spec (Phase1-Navigation): the branded splash holds for about 1.2 s, with no tap needed.
+const SPLASH_HOLD_MS = 1200;
+const LOADER_TRACK = 56;
+const LOADER_BAR = 24;
+
+export default function Splash() {
+  const insets = useSafeAreaInsets();
+  const onboardingComplete = useAppStore((state) => state.onboardingComplete);
+
+  useEffect(() => {
+    // replace() so Android Back never returns to the splash.
+    const timer = setTimeout(() => {
+      router.replace(onboardingComplete ? '/home' : '/discover');
+    }, SPLASH_HOLD_MS);
+    return () => clearTimeout(timer);
+  }, [onboardingComplete]);
+
+  // Reanimated follows the system "reduce motion" setting, so both animations are skipped when it is on.
+  const rise = useSharedValue(0);
+  const sweep = useSharedValue(0);
+
+  useEffect(() => {
+    rise.set(withTiming(1, { duration: 700, easing: Easing.out(Easing.ease) }));
+    sweep.set(withRepeat(withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.ease) }), -1));
+  }, [rise, sweep]);
+
+  const riseStyle = useAnimatedStyle(() => ({
+    opacity: rise.get(),
+    transform: [{ translateY: (1 - rise.get()) * 8 }],
+  }));
+
+  const sweepStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: -LOADER_BAR + sweep.get() * (LOADER_TRACK + LOADER_BAR) }],
+  }));
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <View className="flex-1 items-center justify-center bg-canvas px-6">
+      <Animated.View style={riseStyle}>
+        <View className="items-center gap-7">
+          <SplashMirror />
+          <View className="items-center gap-3">
+            <Wordmark size="lg" />
+            <Text className="text-center font-serif-italic text-[22px] leading-[27px] text-muted">
+              Your Look. Your Choice. No Surprises.
+            </Text>
+          </View>
+        </View>
+      </Animated.View>
+
+      <View
+        accessibilityRole="progressbar"
+        accessibilityLabel="Loading GlamQuote AI"
+        style={{ bottom: 56 + insets.bottom, width: LOADER_TRACK }}
+        className="absolute h-0.5 overflow-hidden rounded-full bg-line">
+        <Animated.View style={sweepStyle}>
+          <View style={{ width: LOADER_BAR }} className="h-0.5 bg-plum" />
+        </Animated.View>
+      </View>
+    </View>
   );
 }
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
