@@ -1,4 +1,5 @@
-// Shared create / status flow for YouCam generation tasks (Nail Transfer, Nail VTO, Hairstyle).
+// Shared create / status flow for YouCam generation tasks (Nail Transfer, Nail VTO, Hairstyle,
+// Hair Color).
 //
 //   POST /<function>              multipart: idempotency_key + feature-specific parts
 //                                 -> { taskId, status }
@@ -21,12 +22,13 @@ import {
   type YouCamUpload,
 } from './youcam.ts';
 
-export type GenerationKind = 'nail_transfer' | 'nail_vto' | 'hairstyle';
+export type GenerationKind = 'nail_transfer' | 'nail_vto' | 'hairstyle' | 'hair_color';
 
 export const FEATURE_FOR_KIND: Record<GenerationKind, YouCamTaskFeature> = {
   nail_transfer: 'ai-nail',
   nail_vto: 'nail-vto',
   hairstyle: 'hair-transfer',
+  hair_color: 'hair-color',
 };
 
 /** A validated request, ready to be uploaded and started. */
@@ -123,6 +125,7 @@ function taskErrorCode(providerCode: string | null): string {
     case 'error_hair_too_short':
       return 'hair_too_short';
     case 'error_below_min_image_size':
+      return 'image_too_small';
     case 'error_unsupport_ratio':
       return 'invalid_image';
     default:
@@ -155,7 +158,7 @@ function providerFailure(error: unknown): { response: Response; code: string; pr
   if (providerCode === 'InvalidTemplate') {
     return { response: fail(422, 'template_unavailable', 'That hairstyle is no longer available.'), code: 'template_unavailable', providerCode };
   }
-  if (providerCode === 'InvalidParameters') {
+  if (providerCode === 'InvalidParameters' || providerCode === 'InvalidStyle') {
     return { response: fail(422, 'unsupported_setting', 'That combination of settings is not supported.'), code: 'unsupported_setting', providerCode };
   }
   return { response: fail(502, 'provider_error', 'The preview service could not accept this request.'), code: 'provider_error', providerCode };

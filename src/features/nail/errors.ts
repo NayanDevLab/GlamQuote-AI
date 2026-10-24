@@ -178,6 +178,7 @@ const CODE_TO_KIND: Record<string, NailErrorKind> = {
   unsupported_shape: 'setting',
   invalid_color: 'setting',
   invalid_image: 'photo',
+  image_too_small: 'photo',
   content_rejected: 'content',
   inference_failed: 'processing',
   submit_failed: 'processing',

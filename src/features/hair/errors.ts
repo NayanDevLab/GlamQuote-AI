@@ -188,6 +188,7 @@ const CODE_TO_KIND: Record<string, HairErrorKind> = {
   multiple_faces: 'multiple_faces',
   hair_too_short: 'hair_too_short',
   invalid_image: 'selfie',
+  image_too_small: 'selfie',
   content_rejected: 'content',
   inference_failed: 'processing',
   submit_failed: 'processing',

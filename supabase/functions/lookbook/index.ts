@@ -43,8 +43,9 @@ type TaskRow = {
 const LOOK_COLUMNS =
   'id, task_id, kind, title, design_source, design_id, effect_type, config, source_photo_hash, image_public_id, image_format, image_width, image_height, created_at';
 
-// reference/catalogue: Nail Transfer · custom: Nail VTO · template: a YouCam hairstyle template.
-const DESIGN_SOURCES = ['reference', 'catalogue', 'custom', 'template'];
+// reference/catalogue: Nail Transfer · custom: Nail VTO or a custom hair color ·
+// template: a YouCam hairstyle template · preset: a YouCam hair color preset.
+const DESIGN_SOURCES = ['reference', 'catalogue', 'custom', 'template', 'preset'];
 
 type Cloudinary = ReturnType<typeof createCloudinaryClient>;
 

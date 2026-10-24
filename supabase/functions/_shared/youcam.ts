@@ -5,6 +5,7 @@
 //   https://docs.perfectcorp.com/reference/ai_nail_vto       (task + polling)
 // and on 2026-10-24:
 //   https://docs.perfectcorp.com/reference/ai_hairstyle      (V2.1 templates, task + polling)
+//   https://docs.perfectcorp.com/reference/ai_hair_color     (V1.0 task + polling)
 //   https://docs.perfectcorp.com/_bundle/reference/file.json (File API)
 //
 // Only documented endpoints and parameter names are used. This file is plain TypeScript
@@ -48,14 +49,15 @@ export type YouCamTaskState =
   | { status: 'success'; resultUrl: string }
   | { status: 'error'; providerCode: string | null };
 
-/** Task families: AI Nail Transfer, AI Nail Virtual Try-On and AI Hairstyle Virtual Try-On. */
-export type YouCamTaskFeature = 'ai-nail' | 'nail-vto' | 'hair-transfer';
+/** Task families: AI Nail Transfer, Nail Virtual Try-On, Hairstyle and Hair Color Virtual Try-On. */
+export type YouCamTaskFeature = 'ai-nail' | 'nail-vto' | 'hair-transfer' | 'hair-color';
 
 // Each feature's task path, including its API version.
 const TASK_PATH: Record<YouCamTaskFeature, string> = {
   'ai-nail': '/s2s/v2.0/task/ai-nail',
   'nail-vto': '/s2s/v2.0/task/nail-vto',
   'hair-transfer': '/s2s/v2.1/task/hair-transfer',
+  'hair-color': '/s2s/v2.0/task/hair-color',
 };
 
 /** A predefined hairstyle. Field names are the documented `Template` schema. */
@@ -201,7 +203,10 @@ export function createYouCamClient(apiKey: string) {
     const data = await call('GET', `${TASK_PATH[feature]}/${encodeURIComponent(taskId)}`);
     if (data.task_status === 'running') return { status: 'running' };
     if (data.task_status === 'error') {
-      return { status: 'error', providerCode: typeof data.error === 'string' ? data.error : null };
+      // `error` is a code (or sometimes a sentence); Hair Color may give only `error_message`.
+      const code =
+        typeof data.error === 'string' ? data.error : typeof data.error_message === 'string' ? data.error_message : null;
+      return { status: 'error', providerCode: code };
     }
     if (data.task_status === 'success') {
       const url = isObject(data.results) ? data.results.url : null;
@@ -247,6 +252,14 @@ export function createYouCamClient(apiKey: string) {
     return { templates, nextToken };
   }
 
+  /**
+   * `POST /s2s/v2.0/task/hair-color` — AI Hair Color Virtual Try-On, consumes 1 unit. `request`
+   * is already validated (see hair-color.ts): either `{ preset }` or `{ pattern, palettes }`.
+   */
+  function createHairColorTask(input: { srcFileId: string; request: JsonObject }): Promise<string> {
+    return createTask('hair-color', { src_file_id: input.srcFileId, ...input.request });
+  }
+
   const getNailTransferTask = (taskId: string) => getTask('ai-nail', taskId);
 
   return {
@@ -255,6 +268,7 @@ export function createYouCamClient(apiKey: string) {
     createNailVtoTask,
     createHairstyleTask,
     listHairstyleTemplates,
+    createHairColorTask,
     getTask,
     getNailTransferTask,
   };

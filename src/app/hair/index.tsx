@@ -161,7 +161,13 @@ export default function HairStudio() {
             body="Upload a hairstyle reference photo."
             engine="YouCam custom reference"
           />
-          <ModeCard icon="sparkle" title="Explore Hair Colors" body="Coming in Phase 4B" engine="YouCam AI Hair Color" />
+          <ModeCard
+            icon="sparkle"
+            title="Explore Hair Colors"
+            body="Full color or ombre, previewed on your photo."
+            engine="YouCam AI Hair Color"
+            onPress={() => router.push('/hair/color')}
+          />
         </View>
 
         <View className="flex-row justify-between rounded-lg bg-blush px-3 py-3">

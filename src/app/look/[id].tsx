@@ -48,7 +48,11 @@ export default function SavedLookDetail() {
               {lookArea(look)} ·{' '}
               {look.kind === 'hairstyle'
                 ? 'YouCam Hairstyle'
-                : look.effectType === 'nail_polish'
+                : look.kind === 'hair_color'
+                  ? look.effectType === 'ombre'
+                    ? 'Ombre Hair Color'
+                    : 'Full Hair Color'
+                  : look.effectType === 'nail_polish'
                   ? 'Nail Polish'
                   : look.effectType === 'press_on_nails'
                     ? 'Press-On Nails'

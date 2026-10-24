@@ -58,6 +58,9 @@ export type ImageLimits = {
   minShortSide: number;
   /** Accepted formats; JPEG and PNG unless a feature is stricter. */
   formats?: ImageInfo['format'][];
+  /** Per-axis maximums, for features whose limit depends on orientation. */
+  maxWidth?: number;
+  maxHeight?: number;
 };
 
 /** AI Nail Transfer: long side <= 4096. */
@@ -72,6 +75,12 @@ export const NAIL_VTO_LIMITS: ImageLimits = { maxLongSide: 1920, minShortSide: 2
  * 128 px wide, so a shorter side under 128 px can never pass.
  */
 export const HAIRSTYLE_LIMITS: ImageLimits = { maxLongSide: 1024, minShortSide: 128, formats: ['jpeg'] };
+/**
+ * AI Hair Color source photo: at least 320 x 320, and width < 1920 and height < 1080. The spec
+ * table says "long side < 1920", but its error_exceed_max_image_size text says "width < 1920px,
+ * height < 1080px"; meeting both is the only safe reading.
+ */
+export const HAIR_COLOR_LIMITS: ImageLimits = { maxLongSide: 1919, minShortSide: 320, maxWidth: 1919, maxHeight: 1079 };
 
 /** Returns a human-readable reason the image is unusable, or null if it meets the limits. */
 export function describeImageProblem(bytes: Uint8Array, limits: ImageLimits = NAIL_TRANSFER_LIMITS): string | null {
@@ -83,6 +92,12 @@ export function describeImageProblem(bytes: Uint8Array, limits: ImageLimits = NA
   if (info.width < 1 || info.height < 1) return 'The image has no readable dimensions.';
   if (Math.max(info.width, info.height) > limits.maxLongSide) {
     return `The image's longest side must be ${limits.maxLongSide} px or less.`;
+  }
+  if (limits.maxWidth && info.width > limits.maxWidth) {
+    return `The image must be at most ${limits.maxWidth} px wide.`;
+  }
+  if (limits.maxHeight && info.height > limits.maxHeight) {
+    return `The image must be at most ${limits.maxHeight} px tall.`;
   }
   if (Math.min(info.width, info.height) < limits.minShortSide) {
     return `The image's shortest side must be at least ${limits.minShortSide} px.`;

@@ -1,0 +1,8 @@
+{
+  "nodeModulesDir": "none",
+  "lock": false,
+  "imports": {
+    "@supabase/server": "npm:@supabase/server@1",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+  }
+}

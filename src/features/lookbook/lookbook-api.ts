@@ -4,12 +4,12 @@ import { getSupabase, invokeEdgeFunction, isSupabaseConfigured } from '@/lib/sup
 export type SavedLook = {
   id: string;
   taskId: string;
-  kind: 'nail_transfer' | 'nail_vto' | 'hairstyle';
+  kind: 'nail_transfer' | 'nail_vto' | 'hairstyle' | 'hair_color';
   title: string;
-  /** `template` is a YouCam hairstyle template; `designId` is then its template id. */
-  designSource: 'reference' | 'catalogue' | 'custom' | 'template';
+  /** `template` is a YouCam hairstyle template (`designId` is its id); `preset` a hair color preset. */
+  designSource: 'reference' | 'catalogue' | 'custom' | 'template' | 'preset';
   designId: string | null;
-  /** Nail VTO only: 'nail_polish' or 'press_on_nails'. */
+  /** Nail VTO: 'nail_polish' or 'press_on_nails'. Hair Color: 'full' or 'ombre'. */
   effectType: string | null;
   /** Looks sharing a hash came from the same original photo (Compare Looks eligibility). */
   sourcePhotoHash: string | null;
@@ -52,5 +52,5 @@ export async function saveLook(input: {
 
 /** The studio a saved look came from, for labels such as "Hair · AI Preview". */
 export function lookArea(look: SavedLook): 'Hair' | 'Nails' {
-  return look.kind === 'hairstyle' ? 'Hair' : 'Nails';
+  return look.kind === 'hairstyle' || look.kind === 'hair_color' ? 'Hair' : 'Nails';
 }

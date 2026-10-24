@@ -8,12 +8,14 @@ type SliderProps = {
   min?: number;
   max?: number;
   step?: number;
+  /** How the current value is shown (defaults to the number itself). */
+  format?: (value: number) => string;
 };
 
 const THUMB = 24;
 
 /** Labelled value slider in the design system's plum-on-blush style. Drag the track to adjust. */
-export function Slider({ label, value, onChange, min = 0, max = 100, step = 1 }: SliderProps) {
+export function Slider({ label, value, onChange, min = 0, max = 100, step = 1, format = String }: SliderProps) {
   const [width, setWidth] = useState(0);
   // Where the current touch began; written and read only inside the touch handlers.
   const touch = useRef({ x: 0, y: 0, value });
@@ -25,7 +27,7 @@ export function Slider({ label, value, onChange, min = 0, max = 100, step = 1 }:
     <View className="gap-1.5">
       <View className="flex-row items-center justify-between">
         <Text className="font-sans-medium text-body-s text-ink">{label}</Text>
-        <Text className="font-sans-semibold text-body-s text-plum">{value}</Text>
+        <Text className="font-sans-semibold text-body-s text-plum">{format(value)}</Text>
       </View>
       <View
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
@@ -49,7 +51,7 @@ export function Slider({ label, value, onChange, min = 0, max = 100, step = 1 }:
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel={label}
-        accessibilityValue={{ min, max, now: value }}
+        accessibilityValue={{ min, max, now: value, text: format(value) }}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={(event) =>
           onChange(clampToStep(value + (event.nativeEvent.actionName === 'increment' ? 1 : -1) * step * 5))
