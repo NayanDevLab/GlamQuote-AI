@@ -19,7 +19,7 @@ export default serveGeneration({
     if ('problem' in reference) return fail(422, 'invalid_reference_image', reference.problem);
 
     return {
-      hand: hand.bytes,
+      sourcePhoto: hand.bytes,
       uploads: [youcamUpload('hand', hand.bytes), youcamUpload('reference', reference.bytes)],
       start: (youcam, [srcFileId, refFileId]) => youcam.createNailTransferTask({ srcFileId, refFileId }),
     };

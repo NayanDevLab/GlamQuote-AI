@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
-import { LOOKBOOK_QUERY_KEY, listSavedLooks } from '@/features/lookbook/lookbook-api';
+import { LOOKBOOK_QUERY_KEY, listSavedLooks, lookArea } from '@/features/lookbook/lookbook-api';
 import { colors } from '@/theme';
 
 /** A saved look, reopened from stored media. Viewing it never calls YouCam. */
@@ -45,12 +45,14 @@ export default function SavedLookDetail() {
           </View>
           <View className="gap-1">
             <Text className="font-sans-semibold text-overline uppercase text-muted">
-              Nails ·{' '}
-              {look.effectType === 'nail_polish'
-                ? 'Nail Polish'
-                : look.effectType === 'press_on_nails'
-                  ? 'Press-On Nails'
-                  : 'Nail Transfer'}
+              {lookArea(look)} ·{' '}
+              {look.kind === 'hairstyle'
+                ? 'YouCam Hairstyle'
+                : look.effectType === 'nail_polish'
+                  ? 'Nail Polish'
+                  : look.effectType === 'press_on_nails'
+                    ? 'Press-On Nails'
+                    : 'Nail Transfer'}
             </Text>
             <Text accessibilityRole="header" className="font-serif text-title-lg text-ink">
               {look.title}

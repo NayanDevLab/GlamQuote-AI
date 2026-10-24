@@ -4,9 +4,10 @@ import { getSupabase, invokeEdgeFunction, isSupabaseConfigured } from '@/lib/sup
 export type SavedLook = {
   id: string;
   taskId: string;
-  kind: 'nail_transfer' | 'nail_vto';
+  kind: 'nail_transfer' | 'nail_vto' | 'hairstyle';
   title: string;
-  designSource: 'reference' | 'catalogue' | 'custom';
+  /** `template` is a YouCam hairstyle template; `designId` is then its template id. */
+  designSource: 'reference' | 'catalogue' | 'custom' | 'template';
   designId: string | null;
   /** Nail VTO only: 'nail_polish' or 'press_on_nails'. */
   effectType: string | null;
@@ -40,10 +41,16 @@ export async function saveLook(input: {
   taskId: string;
   title: string;
   designSource: SavedLook['designSource'];
+  designId?: string;
 }): Promise<SavedLook> {
   const { look } = await invokeEdgeFunction<{ look: SavedLook }>('lookbook', {
     method: 'POST',
     body: input,
   });
   return look;
+}
+
+/** The studio a saved look came from, for labels such as "Hair · AI Preview". */
+export function lookArea(look: SavedLook): 'Hair' | 'Nails' {
+  return look.kind === 'hairstyle' ? 'Hair' : 'Nails';
 }

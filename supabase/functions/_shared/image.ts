@@ -53,7 +53,12 @@ export function inspectImage(bytes: Uint8Array): ImageInfo | null {
   return inspectPng(bytes) ?? inspectJpeg(bytes);
 }
 
-export type ImageLimits = { maxLongSide: number; minShortSide: number };
+export type ImageLimits = {
+  maxLongSide: number;
+  minShortSide: number;
+  /** Accepted formats; JPEG and PNG unless a feature is stricter. */
+  formats?: ImageInfo['format'][];
+};
 
 /** AI Nail Transfer: long side <= 4096. */
 export const NAIL_TRANSFER_LIMITS: ImageLimits = { maxLongSide: MAX_IMAGE_LONG_SIDE, minShortSide: 1 };
@@ -62,6 +67,11 @@ export const NAIL_TRANSFER_LIMITS: ImageLimits = { maxLongSide: MAX_IMAGE_LONG_S
  * but the live API fails larger photos with "larger than the maximum size (1920x1920px)".
  */
 export const NAIL_VTO_LIMITS: ImageLimits = { maxLongSide: 1920, minShortSide: 256 };
+/**
+ * AI Hairstyle Virtual Try-On selfie: JPEG only, long side <= 1024. The face must be at least
+ * 128 px wide, so a shorter side under 128 px can never pass.
+ */
+export const HAIRSTYLE_LIMITS: ImageLimits = { maxLongSide: 1024, minShortSide: 128, formats: ['jpeg'] };
 
 /** Returns a human-readable reason the image is unusable, or null if it meets the limits. */
 export function describeImageProblem(bytes: Uint8Array, limits: ImageLimits = NAIL_TRANSFER_LIMITS): string | null {
@@ -69,6 +79,7 @@ export function describeImageProblem(bytes: Uint8Array, limits: ImageLimits = NA
   if (bytes.length >= MAX_IMAGE_BYTES) return 'The file must be smaller than 10 MB.';
   const info = inspectImage(bytes);
   if (!info) return 'The file must be a JPEG or PNG image.';
+  if (limits.formats && !limits.formats.includes(info.format)) return 'The file must be a JPEG image.';
   if (info.width < 1 || info.height < 1) return 'The image has no readable dimensions.';
   if (Math.max(info.width, info.height) > limits.maxLongSide) {
     return `The image's longest side must be ${limits.maxLongSide} px or less.`;

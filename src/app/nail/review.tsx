@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { FlowHeader, FooterBar, NailSwatches } from '@/features/nail/components';
 import { customDesignFrom, useNailSession, type NailDesign, type PickedImage } from '@/features/nail/nail-session';
-import { isPhotoReadable } from '@/features/nail/photo';
+import { isPhotoReadable } from '@/lib/photo';
 import { colors } from '@/theme';
 
 function InputTile({

@@ -5,7 +5,7 @@
 //
 // Save copies the genuine YouCam result for one of the caller's own successful tasks into
 // private Cloudinary storage and records it. It never creates a YouCam task, so saving and
-// listing use no units. The original hand photo is never stored.
+// listing use no units. The user's original photo (hand or selfie) is never stored.
 
 import { createCloudinaryClient } from '../_shared/cloudinary.ts';
 import { FEATURE_FOR_KIND, type GenerationKind } from '../_shared/generation.ts';
@@ -43,6 +43,9 @@ type TaskRow = {
 const LOOK_COLUMNS =
   'id, task_id, kind, title, design_source, design_id, effect_type, config, source_photo_hash, image_public_id, image_format, image_width, image_height, created_at';
 
+// reference/catalogue: Nail Transfer · custom: Nail VTO · template: a YouCam hairstyle template.
+const DESIGN_SOURCES = ['reference', 'catalogue', 'custom', 'template'];
+
 type Cloudinary = ReturnType<typeof createCloudinaryClient>;
 
 function cloudinaryFromEnv(): Cloudinary | null {
@@ -61,7 +64,7 @@ async function publicLook(row: LookRow, cloudinary: Cloudinary) {
     title: row.title,
     designSource: row.design_source,
     designId: row.design_id,
-    // Nail VTO only: the customization the server validated and sent to YouCam.
+    // What the server validated and sent to YouCam (Nail VTO customization, hairstyle template).
     effectType: row.effect_type,
     config: row.config,
     // Looks with the same hash came from the same original photo (Compare Looks eligibility).
@@ -95,8 +98,8 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
     return fail(400, 'invalid_request', 'taskId must be a UUID.');
   }
   if (title.length < 1 || title.length > 80) return fail(400, 'invalid_request', 'title must be 1–80 characters.');
-  if (designSource !== 'reference' && designSource !== 'catalogue' && designSource !== 'custom') {
-    return fail(400, 'invalid_request', 'designSource must be "reference", "catalogue" or "custom".');
+  if (!DESIGN_SOURCES.includes(designSource as string)) {
+    return fail(400, 'invalid_request', `designSource must be one of: ${DESIGN_SOURCES.join(', ')}.`);
   }
 
   // Saving the same preview again returns the look that already exists.

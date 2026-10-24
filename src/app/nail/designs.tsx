@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { FlowHeader, FooterBar, Thumb } from '@/features/nail/components';
 import { useNailSession } from '@/features/nail/nail-session';
-import { chooseFromGallery } from '@/features/nail/photo';
+import { chooseFromGallery } from '@/lib/photo';
 import { colors, shadows } from '@/theme';
 
 const REFERENCE_NAME = 'Your reference photo';

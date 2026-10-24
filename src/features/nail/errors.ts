@@ -1,6 +1,6 @@
 import { EdgeFunctionError } from '@/lib/supabase';
 
-import { PhotoUnavailableError } from './photo';
+import { PhotoUnavailableError } from '@/lib/photo';
 
 /** Recovery states from the approved design (NailErrors-Catalog), plus the cases it left out. */
 export type NailErrorKind =

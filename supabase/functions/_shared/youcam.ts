@@ -3,6 +3,8 @@
 // Verified against the official reference on 2026-10-12:
 //   https://docs.perfectcorp.com/reference/ai_nail_transfer  (task + polling)
 //   https://docs.perfectcorp.com/reference/ai_nail_vto       (task + polling)
+// and on 2026-10-24:
+//   https://docs.perfectcorp.com/reference/ai_hairstyle      (V2.1 templates, task + polling)
 //   https://docs.perfectcorp.com/_bundle/reference/file.json (File API)
 //
 // Only documented endpoints and parameter names are used. This file is plain TypeScript
@@ -46,8 +48,18 @@ export type YouCamTaskState =
   | { status: 'success'; resultUrl: string }
   | { status: 'error'; providerCode: string | null };
 
-/** Task families: AI Nail Transfer and AI Nail Virtual Try-On. */
-export type YouCamTaskFeature = 'ai-nail' | 'nail-vto';
+/** Task families: AI Nail Transfer, AI Nail Virtual Try-On and AI Hairstyle Virtual Try-On. */
+export type YouCamTaskFeature = 'ai-nail' | 'nail-vto' | 'hair-transfer';
+
+// Each feature's task path, including its API version.
+const TASK_PATH: Record<YouCamTaskFeature, string> = {
+  'ai-nail': '/s2s/v2.0/task/ai-nail',
+  'nail-vto': '/s2s/v2.0/task/nail-vto',
+  'hair-transfer': '/s2s/v2.1/task/hair-transfer',
+};
+
+/** A predefined hairstyle. Field names are the documented `Template` schema. */
+export type HairstyleTemplate = { id: string; title: string; thumb: string; category: string | null };
 
 type JsonObject = Record<string, unknown>;
 
@@ -156,7 +168,7 @@ export function createYouCamClient(apiKey: string) {
   }
 
   async function createTask(feature: YouCamTaskFeature, body: JsonObject): Promise<string> {
-    const data = await call('POST', `/s2s/v2.0/task/${feature}`, body);
+    const data = await call('POST', TASK_PATH[feature], body);
     if (typeof data.task_id !== 'string' || data.task_id.length === 0) {
       throw new YouCamError('unexpected_response', null, 'YouCam returned no task_id.');
     }
@@ -182,11 +194,11 @@ export function createYouCamClient(apiKey: string) {
   }
 
   /**
-   * `GET /s2s/v2.0/task/{feature}/{task_id}`. `task_status` is running | success | error.
+   * `GET <task path>/{task_id}`. `task_status` is running | success | error.
    * On success the download URL (valid for 2 hours, re-issuable by polling again) is in `results.url`.
    */
   async function getTask(feature: YouCamTaskFeature, taskId: string): Promise<YouCamTaskState> {
-    const data = await call('GET', `/s2s/v2.0/task/${feature}/${encodeURIComponent(taskId)}`);
+    const data = await call('GET', `${TASK_PATH[feature]}/${encodeURIComponent(taskId)}`);
     if (data.task_status === 'running') return { status: 'running' };
     if (data.task_status === 'error') {
       return { status: 'error', providerCode: typeof data.error === 'string' ? data.error : null };
@@ -201,9 +213,51 @@ export function createYouCamClient(apiKey: string) {
     throw new YouCamError('unexpected_response', null, 'YouCam returned an unknown task_status.');
   }
 
+  /**
+   * `POST /s2s/v2.1/task/hair-transfer` with a predefined `template_id` — AI Hairstyle Virtual
+   * Try-On, consumes 2 units. An unknown template is refused (400 InvalidTemplate) before any charge.
+   */
+  function createHairstyleTask(input: { srcFileId: string; templateId: string }): Promise<string> {
+    return createTask('hair-transfer', { src_file_id: input.srcFileId, template_id: input.templateId });
+  }
+
+  /**
+   * `GET /s2s/v2.1/task/template/hair-transfer` — one page (at most 20) of predefined hairstyles.
+   * Listing creates no task and uses no units. Items without an id or thumbnail are skipped.
+   */
+  async function listHairstyleTemplates(
+    startingToken?: string,
+  ): Promise<{ templates: HairstyleTemplate[]; nextToken: string | null }> {
+    const query = new URLSearchParams({ page_size: '20' });
+    if (startingToken) query.set('starting_token', startingToken);
+    const data = await call('GET', `/s2s/v2.1/task/template/hair-transfer?${query}`);
+    const items = Array.isArray(data.templates) ? data.templates : [];
+    const templates: HairstyleTemplate[] = [];
+    for (const item of items) {
+      if (!isObject(item) || typeof item.id !== 'string' || typeof item.thumb !== 'string') continue;
+      if (!item.thumb.startsWith('https://')) continue;
+      templates.push({
+        id: item.id,
+        title: typeof item.title === 'string' && item.title.trim() ? item.title.trim() : 'Hairstyle',
+        thumb: item.thumb,
+        category: typeof item.category_name === 'string' && item.category_name.trim() ? item.category_name.trim() : null,
+      });
+    }
+    const nextToken = typeof data.next_token === 'string' && data.next_token ? data.next_token : null;
+    return { templates, nextToken };
+  }
+
   const getNailTransferTask = (taskId: string) => getTask('ai-nail', taskId);
 
-  return { uploadFiles, createNailTransferTask, createNailVtoTask, getTask, getNailTransferTask };
+  return {
+    uploadFiles,
+    createNailTransferTask,
+    createNailVtoTask,
+    createHairstyleTask,
+    listHairstyleTemplates,
+    getTask,
+    getNailTransferTask,
+  };
 }
 
 export type YouCamClient = ReturnType<typeof createYouCamClient>;

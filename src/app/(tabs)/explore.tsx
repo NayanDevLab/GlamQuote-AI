@@ -142,7 +142,7 @@ export default function Explore() {
               title="Hair Studio"
               description="Cuts, colours & textures"
               tone="cool"
-              onPress={() => router.push('/pending/hair-studio')}
+              onPress={() => router.push('/hair')}
             />
             <StudioCard
               title="Nail Studio"

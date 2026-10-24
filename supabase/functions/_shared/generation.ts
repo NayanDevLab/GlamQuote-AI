@@ -1,4 +1,4 @@
-// Shared create / status flow for YouCam generation tasks (Nail Transfer, Nail VTO).
+// Shared create / status flow for YouCam generation tasks (Nail Transfer, Nail VTO, Hairstyle).
 //
 //   POST /<function>              multipart: idempotency_key + feature-specific parts
 //                                 -> { taskId, status }
@@ -21,17 +21,18 @@ import {
   type YouCamUpload,
 } from './youcam.ts';
 
-export type GenerationKind = 'nail_transfer' | 'nail_vto';
+export type GenerationKind = 'nail_transfer' | 'nail_vto' | 'hairstyle';
 
 export const FEATURE_FOR_KIND: Record<GenerationKind, YouCamTaskFeature> = {
   nail_transfer: 'ai-nail',
   nail_vto: 'nail-vto',
+  hairstyle: 'hair-transfer',
 };
 
 /** A validated request, ready to be uploaded and started. */
 export type Submission = {
-  /** The user's hand photo; its hash identifies the source photo for Compare Looks. */
-  hand: Uint8Array<ArrayBuffer>;
+  /** The user's own photo (hand or selfie); its hash identifies it for Compare Looks. */
+  sourcePhoto: Uint8Array<ArrayBuffer>;
   uploads: YouCamUpload[];
   /** Extra columns recorded with the task (e.g. the validated customization). */
   record?: Record<string, unknown>;
@@ -108,6 +109,22 @@ function taskErrorCode(providerCode: string | null): string {
       return 'content_rejected';
     case 'error_inference':
       return 'inference_failed';
+    // AI Hairstyle Virtual Try-On.
+    case 'error_no_shoulder':
+      return 'selfie_framing';
+    case 'error_large_face_angle':
+    case 'error_face_pose':
+      return 'face_angle';
+    case 'error_insufficient_landmarks':
+    case 'error_no_face':
+      return 'selfie_unclear';
+    case 'error_multiple_people':
+      return 'multiple_faces';
+    case 'error_hair_too_short':
+      return 'hair_too_short';
+    case 'error_below_min_image_size':
+    case 'error_unsupport_ratio':
+      return 'invalid_image';
     default:
       // Some failures arrive as a sentence rather than a code, e.g. Nail VTO's
       // "The input image is larger than the maximum size (1920x1920px)."
@@ -127,13 +144,16 @@ function providerFailure(error: unknown): { response: Response; code: string; pr
   }
   const { failure, providerCode } = error;
   if (failure === 'quota') {
-    return { response: fail(503, 'provider_quota', 'Nail previews are temporarily unavailable.'), code: 'provider_quota', providerCode };
+    return { response: fail(503, 'provider_quota', 'Previews are temporarily unavailable.'), code: 'provider_quota', providerCode };
   }
   if (failure === 'rate_limited' || failure === 'unavailable') {
     return { response: fail(503, 'provider_unavailable', 'The preview service is busy. Please try again shortly.'), code: 'provider_unavailable', providerCode };
   }
   if (failure === 'auth') {
-    return { response: fail(502, 'provider_misconfigured', 'Nail previews are not configured correctly.'), code: 'provider_misconfigured', providerCode };
+    return { response: fail(502, 'provider_misconfigured', 'Previews are not configured correctly.'), code: 'provider_misconfigured', providerCode };
+  }
+  if (providerCode === 'InvalidTemplate') {
+    return { response: fail(422, 'template_unavailable', 'That hairstyle is no longer available.'), code: 'template_unavailable', providerCode };
   }
   if (providerCode === 'InvalidParameters') {
     return { response: fail(422, 'unsupported_setting', 'That combination of settings is not supported.'), code: 'unsupported_setting', providerCode };
@@ -257,7 +277,7 @@ async function createTask(
       kind: definition.kind,
       idempotency_key: idempotencyKey,
       // Identifies the original photo for Compare Looks without storing the photo itself.
-      source_photo_hash: await sha256Hex(submission.hand),
+      source_photo_hash: await sha256Hex(submission.sourcePhoto),
       ...submission.record,
     })
     .select(TASK_COLUMNS)
@@ -337,7 +357,7 @@ export function serveGeneration(definition: GenerationDefinition) {
       const apiKey = Deno.env.get('YOUCAM_API_KEY');
       if (!apiKey) {
         console.error('YOUCAM_API_KEY is not set for this function');
-        return fail(502, 'provider_misconfigured', 'Nail previews are not configured correctly.');
+        return fail(502, 'provider_misconfigured', 'Previews are not configured correctly.');
       }
       const youcam = createYouCamClient(apiKey);
 

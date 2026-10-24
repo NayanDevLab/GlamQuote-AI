@@ -4,6 +4,8 @@ import * as Crypto from 'expo-crypto';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import type { PickedImage } from '@/lib/photo';
+
 import type { NailTaskKind } from './nail-transfer-api';
 import {
   buildPolishConfig,
@@ -20,8 +22,7 @@ import {
   type VtoMode,
 } from './vto';
 
-/** A photo prepared for upload: a JPEG in the app cache, already within the provider's limits. */
-export type PickedImage = { uri: string; width: number; height: number };
+export type { PickedImage };
 
 /** Nail Transfer input: a reference photo of the design the user wants. */
 export type ReferenceDesign = { source: 'reference'; image: PickedImage; name: string };

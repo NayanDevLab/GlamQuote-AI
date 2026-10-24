@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import Svg, { Circle, Defs, Ellipse, Line, Polygon, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, Line, Path, Polygon, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { colors, shadows } from '@/theme';
 
@@ -120,6 +120,62 @@ export function LookbookTeaser() {
         style={{ boxShadow: '0 10px 20px -12px rgba(41, 36, 42, 0.5)' }}
         className="absolute left-[50px] top-1 h-[92px] w-[68px] items-center justify-center rounded-[14px] border border-champagne bg-card">
         <Icon name="bookmarkPlus" size={26} color={colors.plum} strokeWidth={1.7} />
+      </View>
+    </View>
+  );
+}
+
+// Hair Studio figures, copied from the design's 160×200 portrait symbols. Illustrations only —
+// never presented as a person's photo or a generated result.
+const HAIR_FIGURES = {
+  curls: (
+    <>
+      <Path d="M12 200 C16 170 46 152 80 152 C114 152 144 170 148 200Z" fill="#70465B" />
+      <Path d="M38 98 C28 80 34 54 52 46 C58 30 102 30 108 46 C126 54 132 80 122 98 C128 114 118 132 104 130 L56 130 C42 132 32 114 38 98Z" fill="#2A1E1C" />
+      <Rect x={69} y={118} width={22} height={38} rx={10} fill="#7A4C33" />
+      <Ellipse cx={80} cy={94} rx={26} ry={32} fill="#8D5A3E" />
+      <Path d="M50 82 C46 64 58 54 66 58 C68 46 84 44 88 54 C96 46 110 54 108 66 C116 70 112 82 108 82 C96 70 64 70 50 82Z" fill="#2A1E1C" />
+    </>
+  ),
+  crop: (
+    <>
+      <Path d="M12 200 C16 170 46 152 80 152 C114 152 144 170 148 200Z" fill="#29242A" />
+      <Rect x={69} y={118} width={22} height={38} rx={10} fill="#D1A88E" />
+      <Ellipse cx={80} cy={92} rx={26} ry={33} fill="#E3BFA6" />
+      <Path d="M52 84 C48 54 64 42 80 42 C98 42 112 54 108 84 C104 68 96 60 86 58 C76 62 62 66 52 84Z" fill="#5A3A2E" />
+    </>
+  ),
+  user: (
+    <>
+      <Path d="M12 200 C16 170 46 152 80 152 C114 152 144 170 148 200Z" fill="#D7AC90" />
+      <Path d="M42 96 C38 60 58 40 80 40 C104 40 122 60 118 96 C122 120 128 140 120 158 C110 162 102 156 100 148 L60 148 C58 156 50 162 40 158 C32 140 38 120 42 96Z" fill="#3B2A2C" />
+      <Rect x={69} y={118} width={22} height={38} rx={10} fill="#B57C5C" />
+      <Ellipse cx={80} cy={92} rx={26} ry={33} fill="#C68E6E" />
+      <Path d="M52 86 C54 60 68 50 82 50 C98 52 108 64 108 84 C98 70 84 64 72 66 C64 72 58 78 52 86Z" fill="#3B2A2C" />
+    </>
+  ),
+};
+
+export function HairFigure({ variant, width, height }: { variant: keyof typeof HAIR_FIGURES; width: number; height: number }) {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 160 200" aria-hidden>
+      {HAIR_FIGURES[variant]}
+    </Svg>
+  );
+}
+
+/** Hair Studio hero: two portraits with different hair textures (design P4A-1). */
+export function HairPortraits() {
+  return (
+    <View aria-hidden className="absolute inset-0">
+      <View
+        className="absolute right-[-50px] top-[-60px] h-[250px] w-[200px] rounded-full border border-champagne opacity-60"
+      />
+      <View className="absolute bottom-[-14px] left-1">
+        <HairFigure variant="curls" width={190} height={220} />
+      </View>
+      <View className="absolute bottom-[-14px] right-0.5">
+        <HairFigure variant="crop" width={178} height={206} />
       </View>
     </View>
   );

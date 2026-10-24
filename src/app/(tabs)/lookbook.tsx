@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Sheet } from '@/components/ui/sheet';
 import { InlineNote } from '@/components/ui/typography';
-import { LOOKBOOK_QUERY_KEY, listSavedLooks, type SavedLook } from '@/features/lookbook/lookbook-api';
+import { LOOKBOOK_QUERY_KEY, listSavedLooks, lookArea, type SavedLook } from '@/features/lookbook/lookbook-api';
 import { colors, shadows } from '@/theme';
 
 const TUTORIAL_STEPS = [
@@ -23,7 +23,7 @@ function LookCard({ look }: { look: SavedLook }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${look.title}, saved nail preview`}
+      accessibilityLabel={`${look.title}, saved ${lookArea(look) === 'Hair' ? 'hairstyle' : 'nail'} preview`}
       onPress={() => router.push({ pathname: '/look/[id]', params: { id: look.id } })}
       style={shadows.card}
       className="flex-1 rounded-lg border border-blush bg-card p-2 active:bg-canvas">
@@ -35,7 +35,7 @@ function LookCard({ look }: { look: SavedLook }) {
       />
       <View className="gap-0.5 px-2 pb-2 pt-2.5">
         <Text className="font-sans-semibold text-caption uppercase tracking-[1.3px] text-muted">
-          Nails · AI Preview
+          {lookArea(look)} · AI Preview
         </Text>
         <Text numberOfLines={2} className="font-serif text-step text-ink">
           {look.title}

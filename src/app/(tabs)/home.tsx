@@ -82,7 +82,7 @@ export default function Home() {
               title="Hair Studio"
               description="Preview hairstyles on your own photo."
               tone="cool"
-              onPress={() => router.push('/pending/hair-studio')}
+              onPress={() => router.push('/hair')}
             />
           </View>
           <View className="gap-2.5 pt-3">

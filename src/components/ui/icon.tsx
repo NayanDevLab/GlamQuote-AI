@@ -99,6 +99,14 @@ const ICONS = {
     </>
   ),
   upload: <Path d="M12 16V5M7 9l5-5 5 5M5 19h14" />,
+  grid: (
+    <>
+      <Rect x={4} y={4} width={7} height={7} rx={2} />
+      <Rect x={13} y={4} width={7} height={7} rx={2} />
+      <Rect x={4} y={13} width={7} height={7} rx={2} />
+      <Rect x={13} y={13} width={7} height={7} rx={2} />
+    </>
+  ),
   chevronRight: <Path d="m9 6 6 6-6 6" />,
   clock: (
     <>

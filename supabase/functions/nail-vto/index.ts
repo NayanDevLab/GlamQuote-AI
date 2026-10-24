@@ -30,7 +30,7 @@ export default serveGeneration({
     if ('problem' in hand) return fail(422, 'invalid_hand_image', hand.problem);
 
     return {
-      hand: hand.bytes,
+      sourcePhoto: hand.bytes,
       uploads: [youcamUpload('hand', hand.bytes)],
       record: { effect_type: effectType, config: { effects } },
       start: (youcam, [srcFileId]) => youcam.createNailVtoTask({ srcFileId, effectType, effects }),

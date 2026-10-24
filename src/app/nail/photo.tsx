@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { FlowHeader, FooterBar } from '@/features/nail/components';
 import { useNailSession } from '@/features/nail/nail-session';
-import { chooseFromGallery, takePhoto, type PickOutcome } from '@/features/nail/photo';
+import { chooseFromGallery, takePhoto, type PickOutcome } from '@/lib/photo';
 import { colors } from '@/theme';
 
 // From YouCam's documented input guidance plus the approved design's photo tips.
