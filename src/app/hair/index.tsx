@@ -10,6 +10,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { ModeCard } from '@/components/ui/mode-card';
 import { PhotoSlot } from '@/components/ui/photo-slot';
 import { Sheet } from '@/components/ui/sheet';
+import { Thumb } from '@/components/ui/thumb';
 import { useHairSession } from '@/features/hair/hair-session';
 import { colors, shadows } from '@/theme';
 
@@ -32,6 +33,7 @@ export default function HairStudio() {
   const markTutorialSeen = useHairSession((state) => state.markTutorialSeen);
   const hasSelfie = useHairSession((state) => state.selfie !== null);
   const attempt = useHairSession((state) => state.attempt);
+  const previews = useHairSession((state) => state.previews);
   // Shown automatically on the first visit only; the ? replays it at any time.
   const [tutorialOpen, setTutorialOpen] = useState(!tutorialSeen);
 
@@ -111,6 +113,36 @@ export default function HairStudio() {
                 Send Again
               </Text>
             </View>
+          </View>
+        ) : null}
+
+        {previews.length > 0 ? (
+          // Previews made on this device, so an unsaved result can be reopened (and saved) later.
+          // Opening one shows the stored result; it never creates a YouCam task.
+          <View className="gap-2.5">
+            <Text className="font-sans-semibold text-overline uppercase text-muted">Your recent previews</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3">
+              {previews.map((preview) => (
+                <Pressable
+                  key={preview.taskId}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open your ${preview.template.title} preview${preview.savedLookId ? ', saved' : ''}`}
+                  onPress={() => router.push({ pathname: '/hair/result', params: { taskId: preview.taskId } })}
+                  className="w-[132px] gap-1.5">
+                  <View>
+                    <Thumb uri={preview.selfie.uri} size={132} />
+                    <View className="absolute bottom-2 left-2 rounded-full bg-canvas/95 px-2 py-0.5">
+                      <Text className="font-sans-semibold text-[11px] leading-[14px] text-plum">
+                        {preview.savedLookId ? 'Saved' : 'Not saved'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text numberOfLines={1} className="font-sans-semibold text-label-s text-ink">
+                    {preview.template.title}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
           </View>
         ) : null}
 

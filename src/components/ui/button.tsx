@@ -82,8 +82,13 @@ export function Button({
         disabled ? DISABLED_BOX[variant] : v.box
       } ${className}`}>
       {icon ? <Icon name={icon} size={v.iconSize} color={iconColor} /> : null}
-      <Text className={`font-sans-semibold ${disabled ? `${v.label.split(' ')[0]} text-muted` : v.label}`}>
-        {label}
+      {/* Android's default "highQuality" line breaking can under-measure a semibold label and wrap
+          or clip it (seen once with "View Lookbook"); "simple" measures it as drawn. Non-breaking
+          spaces keep labels, which are always short, on one line. */}
+      <Text
+        textBreakStrategy="simple"
+        className={`font-sans-semibold ${disabled ? `${v.label.split(' ')[0]} text-muted` : v.label}`}>
+        {label.replace(/ /g, ' ')}
       </Text>
       {trailingIcon ? (
         <Icon name={trailingIcon} size={v.iconSize - 2} color={iconColor} strokeWidth={2} />
