@@ -66,7 +66,7 @@ export const NAIL_ERRORS: Record<NailErrorKind, NailErrorCopy> = {
   photo: {
     tag: 'Photo check',
     title: 'This photo can’t be used.',
-    body: 'Use a JPEG or PNG photo under 10 MB, at least 256 px on its shorter side. Retaking it or choosing another usually fixes this.',
+    body: 'YouCam needs a JPEG or PNG under 10 MB, no larger than 1920 px and at least 256 px on its shorter side. Nothing was created. Choose the photo again or pick another — your choices are kept.',
     primary: 'change_photo',
     secondary: 'studio',
   },
@@ -94,7 +94,7 @@ export const NAIL_ERRORS: Record<NailErrorKind, NailErrorCopy> = {
   processing: {
     tag: 'Preview not created',
     title: 'The preview didn’t come through.',
-    body: 'YouCam couldn’t finish this preview, so no result was created or saved. Retrying usually works.',
+    body: 'YouCam couldn’t finish this preview, so no result was created or saved. If retrying fails again, try a different photo.',
     primary: 'retry',
     secondary: 'change_design',
   },

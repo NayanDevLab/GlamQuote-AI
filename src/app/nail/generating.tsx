@@ -30,7 +30,7 @@ import {
   type NailTaskKind,
   type NailTransferTask,
 } from '@/features/nail/nail-transfer-api';
-import { isPhotoReadable, PhotoUnavailableError } from '@/features/nail/photo';
+import { isPhotoReadable, PhotoUnavailableError, uploadUriFor } from '@/features/nail/photo';
 import { colors, shadows } from '@/theme';
 
 // YouCam suggests polling about every 10 seconds; it reports no progress percentage.
@@ -60,7 +60,11 @@ async function advance(attempt: NailAttempt): Promise<NailTransferTask> {
     }
     const created =
       design.source === 'custom'
-        ? await createNailVtoTask({ hand, config: design.config, idempotencyKey })
+        ? await createNailVtoTask({
+            hand: { ...hand, uri: await uploadUriFor(attempt.hand) },
+            config: design.config,
+            idempotencyKey,
+          })
         : await createNailTransferTask({
             hand,
             reference: { uri: design.image.uri, mimeType: 'image/jpeg' },

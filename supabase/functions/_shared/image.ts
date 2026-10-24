@@ -57,8 +57,11 @@ export type ImageLimits = { maxLongSide: number; minShortSide: number };
 
 /** AI Nail Transfer: long side <= 4096. */
 export const NAIL_TRANSFER_LIMITS: ImageLimits = { maxLongSide: MAX_IMAGE_LONG_SIDE, minShortSide: 1 };
-/** AI Nail Virtual Try-On user photo: long side <= 2048, short side >= 256. */
-export const NAIL_VTO_LIMITS: ImageLimits = { maxLongSide: 2048, minShortSide: 256 };
+/**
+ * AI Nail Virtual Try-On user photo: long side <= 1920, short side >= 256. The docs say 2048,
+ * but the live API fails larger photos with "larger than the maximum size (1920x1920px)".
+ */
+export const NAIL_VTO_LIMITS: ImageLimits = { maxLongSide: 1920, minShortSide: 256 };
 
 /** Returns a human-readable reason the image is unusable, or null if it meets the limits. */
 export function describeImageProblem(bytes: Uint8Array, limits: ImageLimits = NAIL_TRANSFER_LIMITS): string | null {

@@ -4,9 +4,10 @@ import * as ImagePicker from 'expo-image-picker';
 
 import type { PickedImage } from './nail-session';
 
-// YouCam accepts a long side up to 4096 px and files under 10 MB. 2048 px keeps nail detail,
-// stays far inside both limits and uploads quickly on mobile data.
-const MAX_LONG_SIDE = 2048;
+// The strictest YouCam limit we send to: Nail Virtual Try-On rejects photos over 1920 x 1920 px
+// (its docs say 2048, but the live API answers "larger than the maximum size (1920x1920px)").
+// Nail Transfer allows 4096. 1920 px keeps nail detail and uploads quickly on mobile data.
+const MAX_LONG_SIDE = 1920;
 
 export type PickOutcome =
   | { kind: 'picked'; image: PickedImage }
@@ -56,6 +57,19 @@ export async function isPhotoReadable(uri: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * The URI to upload for a selected photo: the photo itself if it fits within MAX_LONG_SIDE,
+ * otherwise a downscaled copy. Photos chosen before the limit was lowered stay untouched.
+ */
+export async function uploadUriFor(image: PickedImage): Promise<string> {
+  if (Math.max(image.width, image.height) <= MAX_LONG_SIDE) return image.uri;
+  const context = ImageManipulator.manipulate(image.uri);
+  context.resize(image.width >= image.height ? { width: MAX_LONG_SIDE } : { height: MAX_LONG_SIDE });
+  const rendered = await context.renderAsync();
+  const saved = await rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.9 });
+  return saved.uri;
 }
 
 /** Opens the system photo picker. Needs no storage permission on Android. */

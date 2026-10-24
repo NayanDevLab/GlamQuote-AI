@@ -109,6 +109,9 @@ function taskErrorCode(providerCode: string | null): string {
     case 'error_inference':
       return 'inference_failed';
     default:
+      // Some failures arrive as a sentence rather than a code, e.g. Nail VTO's
+      // "The input image is larger than the maximum size (1920x1920px)."
+      if (providerCode && /larger than the maximum size/i.test(providerCode)) return 'invalid_image';
       return 'provider_error';
   }
 }
