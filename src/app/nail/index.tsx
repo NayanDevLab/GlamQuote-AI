@@ -108,7 +108,7 @@ export default function NailStudio() {
           </Text>
         </View>
 
-        {attempt ? (
+        {attempt?.taskId ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => router.push('/nail/generating')}
@@ -120,6 +120,34 @@ export default function NailStudio() {
             </View>
             <Icon name="chevronRight" size={18} color={colors.plum} />
           </Pressable>
+        ) : attempt ? (
+          // Never confirmed by YouCam (e.g. it stopped offline). Sending it again could use a unit
+          // for an old photo and choices, so the user decides: send it, or discard it.
+          <View className="gap-2 rounded-lg bg-blush p-3.5">
+            <View className="flex-row items-center gap-3">
+              <Icon name="clock" size={20} color={colors.plum} />
+              <View className="flex-1">
+                <Text className="font-sans-semibold text-label-s text-ink">A preview wasn’t sent</Text>
+                <Text className="font-sans text-body-s text-muted">
+                  An earlier request stopped before YouCam confirmed it.
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row justify-end gap-2">
+              <Text
+                accessibilityRole="button"
+                onPress={() => useNailSession.getState().endAttempt()}
+                className="px-3 py-2 font-sans-semibold text-label-s text-plum">
+                Discard
+              </Text>
+              <Text
+                accessibilityRole="button"
+                onPress={() => router.push('/nail/generating')}
+                className="px-3 py-2 font-sans-semibold text-label-s text-plum">
+                Send Again
+              </Text>
+            </View>
+          </View>
         ) : null}
 
         <View className="gap-3 pt-1">

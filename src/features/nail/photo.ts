@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -33,6 +34,27 @@ async function finish(result: ImagePicker.ImagePickerResult): Promise<PickOutcom
     return { kind: 'picked', image: await prepare(result.assets[0]) };
   } catch {
     return { kind: 'failed' };
+  }
+}
+
+/** A selected photo whose file can no longer be read (e.g. the app cache was cleared). */
+export class PhotoUnavailableError extends Error {
+  readonly photo: 'hand' | 'reference';
+
+  constructor(photo: 'hand' | 'reference') {
+    super(`The ${photo} photo file is no longer available on this device.`);
+    this.name = 'PhotoUnavailableError';
+    this.photo = photo;
+  }
+}
+
+/** Resolves true if the photo file still exists. Prepared photos live in the app cache. */
+export async function isPhotoReadable(uri: string): Promise<boolean> {
+  try {
+    const file = new File(uri);
+    return file.exists && (file.size ?? 0) > 0;
+  } catch {
+    return false;
   }
 }
 

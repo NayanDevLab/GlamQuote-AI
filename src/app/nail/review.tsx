@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { FlowHeader, FooterBar, NailSwatches } from '@/features/nail/components';
 import { customDesignFrom, useNailSession, type NailDesign, type PickedImage } from '@/features/nail/nail-session';
+import { isPhotoReadable } from '@/features/nail/photo';
 import { colors } from '@/theme';
 
 function InputTile({
@@ -58,6 +60,22 @@ export default function NailReview() {
   const setConsent = useNailSession((state) => state.setConsent);
   const attempt = useNailSession((state) => state.attempt);
   const startAttempt = useNailSession((state) => state.startAttempt);
+  // Selected photos live in the app cache, which Android may clear between sessions. A thumbnail
+  // can still show from the image cache, so check the real files before offering Generate.
+  const [missing, setMissing] = useState<'hand' | 'reference' | null>(null);
+  const handUri = hand?.uri;
+  const referenceUri = isCustom ? undefined : reference?.image.uri;
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const handOk = !handUri || (await isPhotoReadable(handUri));
+      const referenceOk = !referenceUri || (await isPhotoReadable(referenceUri));
+      if (active) setMissing(!handOk ? 'hand' : !referenceOk ? 'reference' : null);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [handUri, referenceUri]);
 
   if (!hand) return <Redirect href={isCustom ? '/nail/photo?next=editor' : '/nail/photo'} />;
   const design: NailDesign | null = isCustom ? customDesignFrom(mode, polish, press) : reference;
@@ -162,19 +180,48 @@ export default function NailReview() {
         </Text>
       </ScrollView>
 
+      {missing ? (
+        <View accessibilityLiveRegion="polite" className="mx-5 mb-2 gap-1 rounded-lg bg-blush p-4">
+          <Text className="font-sans-semibold text-label-s text-ink">
+            {missing === 'hand' ? 'Please choose your hand photo again.' : 'Please choose your nail design again.'}
+          </Text>
+          <Text className="font-sans text-body-s text-muted">
+            The copy saved on this phone was cleared. Nothing has been sent.
+          </Text>
+          <Text
+            accessibilityRole="button"
+            onPress={() => (missing === 'hand' ? router.push('/nail/photo?edit=1') : router.back())}
+            className="self-start py-1.5 font-sans-semibold text-label-s text-plum">
+            {missing === 'hand' ? 'Choose Hand Photo' : 'Choose Design'}
+          </Text>
+        </View>
+      ) : null}
+
       <FooterBar>
-        {attempt ? (
+        {attempt?.taskId ? (
           <>
             <Button label="View Preview in Progress" onPress={() => router.push('/nail/generating')} />
             <Text className="text-center font-sans text-body-s text-muted">
               A preview is already being created — it won’t be requested twice.
             </Text>
           </>
+        ) : attempt ? (
+          // An earlier request never reached YouCam; it may hold a different photo or choices.
+          <>
+            <Button
+              label="Discard Earlier Request"
+              variant="secondary"
+              onPress={() => useNailSession.getState().endAttempt()}
+            />
+            <Text className="text-center font-sans text-body-s text-muted">
+              An earlier request wasn’t sent. Discard it to generate with what you see here.
+            </Text>
+          </>
         ) : (
           <>
             <Button
               label={isCustom ? 'Generate My Nail Preview' : 'Generate AI Preview'}
-              disabled={!consent}
+              disabled={!consent || missing !== null}
               onPress={generate}
             />
             <Text className="text-center font-sans text-body-s text-muted">

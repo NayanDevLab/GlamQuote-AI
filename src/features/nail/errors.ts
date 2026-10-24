@@ -1,5 +1,7 @@
 import { EdgeFunctionError } from '@/lib/supabase';
 
+import { PhotoUnavailableError } from './photo';
+
 /** Recovery states from the approved design (NailErrors-Catalog), plus the cases it left out. */
 export type NailErrorKind =
   | 'hand'
@@ -16,7 +18,10 @@ export type NailErrorKind =
   | 'expired'
   | 'busy'
   | 'session'
-  | 'not_configured';
+  | 'not_configured'
+  | 'hand_missing'
+  | 'reference_missing'
+  | 'unexpected';
 
 export type NailErrorAction = 'retry' | 'change_photo' | 'change_design' | 'studio' | 'keep_waiting';
 
@@ -135,6 +140,27 @@ export const NAIL_ERRORS: Record<NailErrorKind, NailErrorCopy> = {
     primary: 'retry',
     secondary: 'studio',
   },
+  hand_missing: {
+    tag: 'Photo needed again',
+    title: 'Please choose your hand photo again.',
+    body: 'The copy of your photo on this phone was cleared, so nothing was sent and nothing was charged.',
+    primary: 'change_photo',
+    secondary: 'studio',
+  },
+  reference_missing: {
+    tag: 'Design needed again',
+    title: 'Please choose your nail design again.',
+    body: 'The copy of your reference photo on this phone was cleared, so nothing was sent and nothing was charged.',
+    primary: 'change_design',
+    secondary: 'studio',
+  },
+  unexpected: {
+    tag: 'Something went wrong',
+    title: 'The app hit an unexpected problem.',
+    body: 'This wasn’t a connection issue. Your photo and choices are kept; please try again, and tell us if it keeps happening.',
+    primary: 'retry',
+    secondary: 'studio',
+  },
   not_configured: {
     tag: 'Not set up',
     title: 'Previews aren’t connected in this build.',
@@ -178,19 +204,21 @@ export function errorKindForCode(code: string | undefined): NailErrorKind {
 /** Maps anything thrown while creating or polling a task to its recovery state. */
 export function errorKindForThrown(error: unknown): NailErrorKind {
   if (error instanceof EdgeFunctionError) return errorKindForCode(error.code);
+  if (error instanceof PhotoUnavailableError) return error.photo === 'hand' ? 'hand_missing' : 'reference_missing';
   if (error instanceof Error) {
     if (error.message.startsWith('Supabase is not configured')) return 'not_configured';
-    // fetch failures (offline, DNS, dropped connection) surface under these names.
+    // Only a request that never got a response is "offline". A plain TypeError is usually a bug,
+    // except React Native's own fetch failure message.
     if (
       error.name === 'FunctionsFetchError' ||
       error.name === 'AuthRetryableFetchError' ||
-      error.name === 'TypeError'
+      (error.name === 'TypeError' && error.message === 'Network request failed')
     ) {
       return 'network';
     }
     if (error.name.startsWith('Auth')) return 'session';
   }
-  return 'processing';
+  return 'unexpected';
 }
 
 /** Whether the server may already hold a task for this attempt, so Retry must reuse its key. */

@@ -1,3 +1,5 @@
+import { File } from 'expo-file-system';
+
 import { invokeEdgeFunction } from '@/lib/supabase';
 
 import type { NailVtoConfig } from './vto';
@@ -39,11 +41,17 @@ export type NailTransferTask = {
   errorCode?: NailTransferErrorCode;
 };
 
-function filePart(image: LocalImage, name: string): Blob {
-  const extension = image.mimeType === 'image/png' ? 'png' : 'jpg';
-  // React Native's FormData takes a { uri, name, type } descriptor in place of a Blob.
-  return { uri: image.uri, name: `${name}.${extension}`, type: image.mimeType } as unknown as Blob;
+/**
+ * The photo as an upload part. Since SDK 57, `fetch` is Expo's implementation, which cannot send
+ * React Native's `{ uri, name, type }` descriptor (it fails before any request is made); it reads
+ * the bytes of an expo-file-system `File` instead.
+ */
+function filePart(image: LocalImage): File {
+  return new File(image.uri);
 }
+
+const fileName = (image: LocalImage, name: string) =>
+  `${name}.${image.mimeType === 'image/png' ? 'png' : 'jpg'}`;
 
 /**
  * Starts one Nail Transfer preview (1 YouCam unit).
@@ -60,8 +68,8 @@ export function createNailTransferTask(input: {
 }): Promise<NailTransferTask> {
   const form = new FormData();
   form.append('idempotency_key', input.idempotencyKey);
-  form.append('hand', filePart(input.hand, 'hand'));
-  form.append('reference', filePart(input.reference, 'reference'));
+  form.append('hand', filePart(input.hand), fileName(input.hand, 'hand'));
+  form.append('reference', filePart(input.reference), fileName(input.reference, 'reference'));
   return invokeEdgeFunction<NailTransferTask>('nail-transfer', { method: 'POST', body: form });
 }
 
@@ -84,7 +92,7 @@ export function createNailVtoTask(input: {
 }): Promise<NailTransferTask> {
   const form = new FormData();
   form.append('idempotency_key', input.idempotencyKey);
-  form.append('hand', filePart(input.hand, 'hand'));
+  form.append('hand', filePart(input.hand), fileName(input.hand, 'hand'));
   form.append('config', JSON.stringify(input.config));
   return invokeEdgeFunction<NailTransferTask>('nail-vto', { method: 'POST', body: form });
 }

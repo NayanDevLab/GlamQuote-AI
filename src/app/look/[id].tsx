@@ -40,7 +40,7 @@ export default function SavedLookDetail() {
               style={{ width: '100%', aspectRatio: ratio, backgroundColor: colors.blush }}
             />
             <View className="absolute right-3 top-3 rounded-full bg-plum px-3 py-1.5">
-              <Text className="font-sans-semibold text-caption text-white">AI Preview</Text>
+              <Text className="font-sans-semibold text-caption text-white">{'AI Preview'}</Text>
             </View>
           </View>
           <View className="gap-1">

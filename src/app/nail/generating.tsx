@@ -30,6 +30,7 @@ import {
   type NailTaskKind,
   type NailTransferTask,
 } from '@/features/nail/nail-transfer-api';
+import { isPhotoReadable, PhotoUnavailableError } from '@/features/nail/photo';
 import { colors, shadows } from '@/theme';
 
 // YouCam suggests polling about every 10 seconds; it reports no progress percentage.
@@ -51,6 +52,12 @@ async function advance(attempt: NailAttempt): Promise<NailTransferTask> {
   if (!taskId) {
     const hand = { uri: attempt.hand.uri, mimeType: 'image/jpeg' } as const;
     const { design, idempotencyKey } = attempt;
+    // Android reports an unreadable upload file as a network failure, so check first: nothing is
+    // sent (or charged) if a photo has gone missing from the app cache.
+    if (!(await isPhotoReadable(hand.uri))) throw new PhotoUnavailableError('hand');
+    if (design.source === 'reference' && !(await isPhotoReadable(design.image.uri))) {
+      throw new PhotoUnavailableError('reference');
+    }
     const created =
       design.source === 'custom'
         ? await createNailVtoTask({ hand, config: design.config, idempotencyKey })
@@ -127,6 +134,15 @@ export default function NailGenerating() {
   const { data: task, error, refetch } = query;
 
   const thrownKind = error ? errorKindForThrown(error) : null;
+  // Development builds log the technical cause once per failure (name and message only).
+  useEffect(() => {
+    if (!__DEV__ || !error) return;
+    const cause = (error as { context?: unknown }).context;
+    console.warn(
+      `[nail] ${thrownKind}: ${error.name}: ${error.message}` +
+        (cause instanceof Error ? ` (cause: ${cause.name}: ${cause.message})` : ''),
+    );
+  }, [error, thrownKind]);
   const failure: NailErrorKind | null =
     thrownKind ??
     (task?.status === 'error' ? errorKindForCode(task.errorCode) : null) ??

@@ -83,7 +83,8 @@ export function BeforeAfter({ before, after, aspectRatio, onAfterLoad, onAfterEr
           <Text className="font-sans-semibold text-caption text-ink">Original</Text>
         </View>
         <View className="absolute right-3 top-3 rounded-full bg-plum px-3 py-1.5">
-          <Text className="font-sans-semibold text-caption text-white">AI Preview</Text>
+          {/* Non-breaking space: Android otherwise wraps "Preview" onto a clipped second line. */}
+          <Text className="font-sans-semibold text-caption text-white">{'AI Preview'}</Text>
         </View>
       </View>
 
