@@ -1,12 +1,12 @@
 import { Image } from 'expo-image';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
-import { FlowHeader, FooterBar } from '@/features/nail/components';
-import { useNailSession, type PickedImage } from '@/features/nail/nail-session';
+import { FlowHeader, FooterBar, NailSwatches } from '@/features/nail/components';
+import { customDesignFrom, useNailSession, type NailDesign, type PickedImage } from '@/features/nail/nail-session';
 import { colors } from '@/theme';
 
 function InputTile({
@@ -43,22 +43,30 @@ function InputTile({
   );
 }
 
+// Review & consent for both flows: Nail Transfer (a reference photo) and, with `flow=custom`,
+// Nail Virtual Try-On (a Nail Polish or Press-On customization).
 export default function NailReview() {
   const insets = useSafeAreaInsets();
+  const { flow } = useLocalSearchParams<{ flow?: string }>();
+  const isCustom = flow === 'custom';
   const hand = useNailSession((state) => state.hand);
-  const design = useNailSession((state) => state.design);
+  const reference = useNailSession((state) => state.design);
+  const mode = useNailSession((state) => state.vtoMode);
+  const polish = useNailSession((state) => state.polish);
+  const press = useNailSession((state) => state.press);
   const consent = useNailSession((state) => state.consent);
   const setConsent = useNailSession((state) => state.setConsent);
   const attempt = useNailSession((state) => state.attempt);
   const startAttempt = useNailSession((state) => state.startAttempt);
 
-  if (!hand) return <Redirect href="/nail/photo" />;
+  if (!hand) return <Redirect href={isCustom ? '/nail/photo?next=editor' : '/nail/photo'} />;
+  const design: NailDesign | null = isCustom ? customDesignFrom(mode, polish, press) : reference;
   if (!design) return <Redirect href="/nail/designs" />;
 
   // startAttempt() hands back the attempt already in flight, so a double tap — or coming back
   // here and tapping again — can never create (and pay for) a second task.
   const generate = () => {
-    if (startAttempt()) router.push('/nail/generating');
+    if (startAttempt(design)) router.push('/nail/generating');
   };
 
   return (
@@ -69,30 +77,61 @@ export default function NailReview() {
           Ready to See Your <Text className="font-serif-italic text-plum">Look?</Text>
         </Text>
 
-        <View className="flex-row gap-3">
-          <InputTile
-            label="Your Hand"
-            image={hand}
-            action="Edit photo"
-            onAction={() => router.push('/nail/photo?edit=1')}
-          />
-          <InputTile
-            label="Selected Nail Design"
-            image={design.image}
-            action="Change design"
-            onAction={() => router.back()}
-          />
-        </View>
+        {design.source === 'reference' ? (
+          <View className="flex-row gap-3">
+            <InputTile
+              label="Your Hand"
+              image={hand}
+              action="Edit photo"
+              onAction={() => router.push('/nail/photo?edit=1')}
+            />
+            <InputTile
+              label="Selected Nail Design"
+              image={design.image}
+              action="Change design"
+              onAction={() => router.back()}
+            />
+          </View>
+        ) : (
+          <>
+            <View className="flex-row gap-3">
+              <InputTile
+                label="Your Hand"
+                image={hand}
+                action="Change hand photo"
+                onAction={() => router.push('/nail/photo?edit=1')}
+              />
+              <View className="flex-1 gap-2">
+                <NailSwatches compact colors={design.swatches} tip={mode === 'press' ? press.tip : 'oval'} />
+                <Text
+                  accessibilityRole="button"
+                  onPress={() => router.back()}
+                  className="self-start py-1.5 font-sans-semibold text-label-s text-plum">
+                  Edit customization
+                </Text>
+              </View>
+            </View>
+            <View className="gap-2.5 rounded-lg border border-blush bg-card p-4">
+              {design.summary.map((row) => (
+                <View key={row.label} className="flex-row justify-between gap-4">
+                  <Text className="font-sans text-body-m text-muted">{row.label}</Text>
+                  <Text className="flex-1 text-right font-sans-semibold text-body-m text-ink">{row.value}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
 
         <View className="flex-row gap-3 rounded-lg border border-blush bg-card p-4">
           <View className="h-9 w-9 items-center justify-center rounded-full bg-blush">
             <Icon name="info" size={18} color={colors.plum} />
           </View>
           <Text className="flex-1 font-sans text-body-m text-ink">
-            We’ll send this photo and design to <Text className="font-sans-bold">YouCam</Text>, our AI
-            imaging partner, to create a visual simulation of the design on your nails. It’s a preview,
-            not a promise of a real-world result. YouCam may keep uploaded images for up to 30 days under
-            its own policy.
+            {design.source === 'reference' ? 'We’ll send this photo and design to ' : 'We’ll send this photo and these settings to '}
+            <Text className="font-sans-bold">YouCam</Text>, our AI imaging partner, to create a visual
+            simulation on your nails. It’s a preview, not a promise of a real-world result.
+            {design.source === 'custom' ? ' The sample above illustrates your choices; it is not a result.' : ''} YouCam
+            may keep uploaded images for up to 30 days under its own policy.
           </Text>
         </View>
 
@@ -133,7 +172,11 @@ export default function NailReview() {
           </>
         ) : (
           <>
-            <Button label="Generate AI Preview" disabled={!consent} onPress={generate} />
+            <Button
+              label={isCustom ? 'Generate My Nail Preview' : 'Generate AI Preview'}
+              disabled={!consent}
+              onPress={generate}
+            />
             <Text className="text-center font-sans text-body-s text-muted">
               {consent
                 ? 'One preview per tap — the button locks while it works.'

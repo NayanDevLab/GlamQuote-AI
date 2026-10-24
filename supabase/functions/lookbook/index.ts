@@ -8,6 +8,7 @@
 // listing use no units. The original hand photo is never stored.
 
 import { createCloudinaryClient } from '../_shared/cloudinary.ts';
+import { FEATURE_FOR_KIND, type GenerationKind } from '../_shared/generation.ts';
 import { authenticate, fail, json, UUID_PATTERN, type Caller } from '../_shared/http.ts';
 import { inspectImage, MAX_IMAGE_BYTES } from '../_shared/image.ts';
 import { createYouCamClient, YouCamError } from '../_shared/youcam.ts';
@@ -19,6 +20,8 @@ type LookRow = {
   title: string;
   design_source: string;
   design_id: string | null;
+  effect_type: string | null;
+  config: unknown;
   source_photo_hash: string | null;
   image_public_id: string;
   image_format: string;
@@ -27,10 +30,18 @@ type LookRow = {
   created_at: string;
 };
 
-type TaskRow = { id: string; status: string; provider_task_id: string | null; source_photo_hash: string | null };
+type TaskRow = {
+  id: string;
+  kind: GenerationKind;
+  status: string;
+  provider_task_id: string | null;
+  source_photo_hash: string | null;
+  effect_type: string | null;
+  config: unknown;
+};
 
 const LOOK_COLUMNS =
-  'id, task_id, kind, title, design_source, design_id, source_photo_hash, image_public_id, image_format, image_width, image_height, created_at';
+  'id, task_id, kind, title, design_source, design_id, effect_type, config, source_photo_hash, image_public_id, image_format, image_width, image_height, created_at';
 
 type Cloudinary = ReturnType<typeof createCloudinaryClient>;
 
@@ -50,6 +61,9 @@ async function publicLook(row: LookRow, cloudinary: Cloudinary) {
     title: row.title,
     designSource: row.design_source,
     designId: row.design_id,
+    // Nail VTO only: the customization the server validated and sent to YouCam.
+    effectType: row.effect_type,
+    config: row.config,
     // Looks with the same hash came from the same original photo (Compare Looks eligibility).
     sourcePhotoHash: row.source_photo_hash,
     imageUrl: await cloudinary.signedImageUrl(row.image_public_id, row.image_format),
@@ -81,8 +95,8 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
     return fail(400, 'invalid_request', 'taskId must be a UUID.');
   }
   if (title.length < 1 || title.length > 80) return fail(400, 'invalid_request', 'title must be 1–80 characters.');
-  if (designSource !== 'reference' && designSource !== 'catalogue') {
-    return fail(400, 'invalid_request', 'designSource must be "reference" or "catalogue".');
+  if (designSource !== 'reference' && designSource !== 'catalogue' && designSource !== 'custom') {
+    return fail(400, 'invalid_request', 'designSource must be "reference", "catalogue" or "custom".');
   }
 
   // Saving the same preview again returns the look that already exists.
@@ -95,10 +109,9 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
   // Only a genuine, successful preview that belongs to this guest can be saved.
   const { data: task, error: taskError } = await db
     .from('generation_tasks')
-    .select('id, status, provider_task_id, source_photo_hash')
+    .select('id, kind, status, provider_task_id, source_photo_hash, effect_type, config')
     .eq('id', taskId)
     .eq('user_id', userId)
-    .eq('kind', 'nail_transfer')
     .maybeSingle<TaskRow>();
   if (taskError) return fail(500, 'server_error', 'Could not load the preview.');
   if (!task) return fail(404, 'not_found', 'No preview was found for this task.');
@@ -112,7 +125,7 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
   // Re-read the task for a fresh download link (they expire after about 2 hours).
   let bytes: Uint8Array<ArrayBuffer>;
   try {
-    const state = await createYouCamClient(youcamKey).getNailTransferTask(task.provider_task_id);
+    const state = await createYouCamClient(youcamKey).getTask(FEATURE_FOR_KIND[task.kind], task.provider_task_id);
     if (state.status !== 'success') {
       return fail(409, 'result_unavailable', 'This preview is no longer available to save.');
     }
@@ -149,10 +162,13 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
     .insert({
       user_id: userId,
       task_id: task.id,
-      kind: 'nail_transfer',
+      kind: task.kind,
       title,
       design_source: designSource,
       design_id: designId,
+      // Copied from the task, so saved details always match what was actually generated.
+      effect_type: task.effect_type,
+      config: task.config,
       source_photo_hash: task.source_photo_hash,
       image_public_id: asset.publicId,
       image_format: asset.format,

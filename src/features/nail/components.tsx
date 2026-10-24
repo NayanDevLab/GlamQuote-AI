@@ -11,6 +11,7 @@ import { colors } from '@/theme';
 
 import { ACTION_LABELS, NAIL_ERRORS, type NailErrorAction, type NailErrorKind } from './errors';
 import type { PickedImage } from './nail-session';
+import type { TipShape } from './vto';
 
 const STEPS = ['Photo', 'Design', 'Review'] as const;
 
@@ -82,18 +83,78 @@ export function Thumb({ image, size = 56 }: { image: PickedImage; size?: number 
   );
 }
 
+// Sample nails: longer, rounder tips for almond and stiletto. An illustration only.
+const TIP_STYLE: Record<TipShape, { radius: number; height: number }> = {
+  square: { radius: 4, height: 46 },
+  squoval: { radius: 10, height: 46 },
+  oval: { radius: 16, height: 48 },
+  almond: { radius: 16, height: 56 },
+  stiletto: { radius: 16, height: 64 },
+};
+
+/**
+ * Five illustrated nails showing the chosen colours (thumb to pinky). This is a swatch of the
+ * user's choices — never a generated preview — and is always labelled as sample styling.
+ */
+export function NailSwatches({
+  colors: swatches,
+  tip = 'oval',
+  compact = false,
+}: {
+  colors: string[];
+  tip?: TipShape;
+  /** Narrower nails for half-width placements such as the Review tile. */
+  compact?: boolean;
+}) {
+  const { radius, height } = TIP_STYLE[tip];
+  const nailWidth = compact ? 20 : 30;
+  return (
+    <View
+      accessible
+      accessibilityLabel="Sample styling of your color choices. Not your photo."
+      className={`items-center gap-3 rounded-lg bg-blush pb-3 pt-5 ${compact ? 'px-2' : 'px-4'}`}>
+      <View className={`h-16 flex-row items-end ${compact ? 'gap-1.5' : 'gap-3'}`}>
+        {swatches.map((hex, index) => (
+          <View
+            key={index}
+            style={{
+              backgroundColor: hex,
+              height: index === 0 ? height - 6 : height,
+              width: index === 0 ? nailWidth + 4 : nailWidth,
+              borderTopLeftRadius: radius,
+              borderTopRightRadius: radius,
+              borderBottomLeftRadius: 9,
+              borderBottomRightRadius: 9,
+              boxShadow: '0 4px 8px -4px rgba(41, 36, 42, 0.5)',
+            }}
+            className="overflow-hidden border border-canvas/60">
+            <View className="ml-1.5 mt-2 h-5 w-1 rounded-full bg-white/35" />
+          </View>
+        ))}
+      </View>
+      <Text className="text-center font-sans-semibold text-caption text-muted">
+        Sample styling · not your photo
+      </Text>
+    </View>
+  );
+}
+
 type NailErrorStateProps = {
   kind: NailErrorKind;
   onAction: (action: NailErrorAction) => void;
   hand?: PickedImage | null;
   designImage?: PickedImage | null;
+  /** Nail VTO: the design step is the customization editor. */
+  custom?: boolean;
 };
 
 /**
  * One reusable recovery state: what happened, what was kept, and two next steps. It is never
  * shown in place of a result and never says a preview exists when the task failed.
  */
-export function NailErrorState({ kind, onAction, hand, designImage }: NailErrorStateProps) {
+export function NailErrorState({ kind, onAction, hand, designImage, custom = false }: NailErrorStateProps) {
+  const labelFor = (action: NailErrorAction) =>
+    custom && action === 'change_design' ? 'Change Customization' : ACTION_LABELS[action];
   const copy = NAIL_ERRORS[kind];
   // An input that caused the error is not offered back as "kept".
   const keptHand = kind !== 'hand' && kind !== 'photo' ? hand : null;
@@ -134,9 +195,9 @@ export function NailErrorState({ kind, onAction, hand, designImage }: NailErrorS
       ) : null}
 
       <View className="gap-2.5">
-        <Button label={ACTION_LABELS[copy.primary]} onPress={() => onAction(copy.primary)} />
+        <Button label={labelFor(copy.primary)} onPress={() => onAction(copy.primary)} />
         <Button
-          label={ACTION_LABELS[copy.secondary]}
+          label={labelFor(copy.secondary)}
           variant="secondary"
           onPress={() => onAction(copy.secondary)}
         />

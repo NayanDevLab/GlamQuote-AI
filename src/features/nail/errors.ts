@@ -3,6 +3,8 @@ import { EdgeFunctionError } from '@/lib/supabase';
 /** Recovery states from the approved design (NailErrors-Catalog), plus the cases it left out. */
 export type NailErrorKind =
   | 'hand'
+  | 'nails_small'
+  | 'setting'
   | 'photo'
   | 'reference'
   | 'content'
@@ -42,10 +44,24 @@ export const NAIL_ERRORS: Record<NailErrorKind, NailErrorCopy> = {
     primary: 'change_photo',
     secondary: 'change_design',
   },
+  nails_small: {
+    tag: 'Photo check',
+    title: 'Your nails look too small in this photo.',
+    body: 'Move closer so your hand fills at least half the frame, with every nail in view. Your customization is kept.',
+    primary: 'change_photo',
+    secondary: 'change_design',
+  },
+  setting: {
+    tag: 'Setting not supported',
+    title: 'This combination isn’t supported.',
+    body: 'YouCam didn’t accept one of these settings, so nothing was created. Adjust your customization and try again — your photo is kept.',
+    primary: 'change_design',
+    secondary: 'studio',
+  },
   photo: {
     tag: 'Photo check',
     title: 'This photo can’t be used.',
-    body: 'Use a JPEG or PNG photo under 10 MB. Retaking it or choosing another usually fixes this.',
+    body: 'Use a JPEG or PNG photo under 10 MB, at least 256 px on its shorter side. Retaking it or choosing another usually fixes this.',
     primary: 'change_photo',
     secondary: 'studio',
   },
@@ -122,7 +138,7 @@ export const NAIL_ERRORS: Record<NailErrorKind, NailErrorCopy> = {
   not_configured: {
     tag: 'Not set up',
     title: 'Previews aren’t connected in this build.',
-    body: 'This build has no preview service configured, so nothing was sent. Your photo and design are kept.',
+    body: 'This build has no preview service configured, so nothing was sent. Your photo and choices are kept.',
     primary: 'studio',
     secondary: 'change_design',
   },
@@ -131,6 +147,10 @@ export const NAIL_ERRORS: Record<NailErrorKind, NailErrorCopy> = {
 const CODE_TO_KIND: Record<string, NailErrorKind> = {
   // Task outcomes reported by YouCam.
   no_hand_detected: 'hand',
+  nail_too_small: 'nails_small',
+  unsupported_setting: 'setting',
+  unsupported_shape: 'setting',
+  invalid_color: 'setting',
   invalid_image: 'photo',
   content_rejected: 'content',
   inference_failed: 'processing',

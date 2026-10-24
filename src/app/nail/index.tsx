@@ -13,7 +13,7 @@ import { colors, shadows } from '@/theme';
 
 const TUTORIAL_STEPS = [
   'Add a clear photo of your hand.',
-  'Choose a nail design reference.',
+  'Choose an inspiration or customize your nails.',
   'Generate a preview and compare your results.',
 ];
 
@@ -135,7 +135,8 @@ export default function NailStudio() {
             icon="sparkle"
             title="Customize My Nails"
             body="Explore nail colors, finishes and supported shapes."
-            engine="Under development"
+            engine="YouCam AI Nail Virtual Try-On"
+            onPress={() => router.push('/nail/customize')}
           />
         </View>
 
@@ -159,7 +160,7 @@ export default function NailStudio() {
         </View>
 
         <Text className="text-center font-sans text-body-s text-muted">
-          It starts from a photo of your hand — not a live camera filter.
+          Both start from a photo of your hand — not a live camera filter.
         </Text>
       </ScrollView>
 
@@ -173,7 +174,7 @@ export default function NailStudio() {
           </>
         }>
         <Text className="font-sans text-body-m text-muted">
-          Start with a clear photo of your hand, then add a photo of the nail design you like.
+          Two ways to try a look. Both start with a clear photo of your hand.
         </Text>
         <View className="gap-3 rounded-[22px] border border-blush bg-card p-3">
           {TUTORIAL_STEPS.map((step, index) => (

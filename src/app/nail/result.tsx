@@ -11,7 +11,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { LOOKBOOK_QUERY_KEY, saveLook } from '@/features/lookbook/lookbook-api';
 import { FooterBar, NailErrorState } from '@/features/nail/components';
 import { previewsFromSamePhoto, useNailSession } from '@/features/nail/nail-session';
-import { getNailTransferTask } from '@/features/nail/nail-transfer-api';
+import { getNailTask } from '@/features/nail/nail-transfer-api';
 import { EdgeFunctionError } from '@/lib/supabase';
 import { colors } from '@/theme';
 
@@ -46,7 +46,7 @@ export default function NailResult() {
     if (media !== 'ok') return;
     setMedia('refreshing');
     try {
-      const task = await getNailTransferTask(preview.taskId);
+      const task = await getNailTask(preview.kind, preview.taskId);
       if (task.status === 'success' && task.resultUrl && task.resultUrl !== preview.resultUrl) {
         updatePreview(preview.taskId, { resultUrl: task.resultUrl });
         setMedia('ok');
@@ -58,6 +58,8 @@ export default function NailResult() {
     setMedia('unavailable');
   };
 
+  const isVto = preview.kind === 'nail_vto';
+  const designRoute = isVto ? '/nail/editor' : '/nail/designs';
   const comparable = previewsFromSamePhoto(previews, preview).length >= 2;
   const saved = preview.savedLookId !== null;
   const saveError = save.error
@@ -83,7 +85,8 @@ export default function NailResult() {
         <NailErrorState
           kind="expired"
           hand={preview.hand}
-          onAction={(action) => router.dismissTo(action === 'change_design' ? '/nail/designs' : '/nail')}
+          custom={preview.kind === 'nail_vto'}
+          onAction={(action) => router.dismissTo(action === 'change_design' ? designRoute : '/nail')}
         />
       ) : (
         <>
@@ -94,7 +97,7 @@ export default function NailResult() {
               </Text>
               <Text className="font-sans text-body-m text-muted">
                 <Text className="font-sans-semibold text-ink">{preview.designName}</Text> · applied by YouCam
-                AI Nail Transfer
+                {isVto ? ' AI Nail Virtual Try-On' : ' AI Nail Transfer'}
               </Text>
             </View>
 
@@ -108,6 +111,17 @@ export default function NailResult() {
             <Text className="text-center font-sans text-body-s text-muted">
               AI preview only. Actual results may vary.
             </Text>
+
+            {preview.summary.length > 0 ? (
+              <View className="gap-2.5 rounded-lg border border-blush bg-card p-4">
+                {preview.summary.map((row) => (
+                  <View key={row.label} className="flex-row justify-between gap-4">
+                    <Text className="font-sans text-body-m text-muted">{row.label}</Text>
+                    <Text className="flex-1 text-right font-sans-semibold text-body-m text-ink">{row.value}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
             {saved ? (
               <View accessibilityLiveRegion="polite" className="flex-row items-center gap-3 rounded-lg bg-blush p-4">
@@ -142,9 +156,9 @@ export default function NailResult() {
               />
             )}
             <Button
-              label="Try Another Design"
+              label={isVto ? 'Try Another Variation' : 'Try Another Design'}
               variant="secondary"
-              onPress={() => router.dismissTo('/nail/designs')}
+              onPress={() => router.dismissTo(designRoute)}
             />
             {/* Compare needs two real previews of the same original photo. */}
             {comparable ? (

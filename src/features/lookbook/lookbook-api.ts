@@ -4,10 +4,12 @@ import { getSupabase, invokeEdgeFunction, isSupabaseConfigured } from '@/lib/sup
 export type SavedLook = {
   id: string;
   taskId: string;
-  kind: 'nail_transfer';
+  kind: 'nail_transfer' | 'nail_vto';
   title: string;
-  designSource: 'reference' | 'catalogue';
+  designSource: 'reference' | 'catalogue' | 'custom';
   designId: string | null;
+  /** Nail VTO only: 'nail_polish' or 'press_on_nails'. */
+  effectType: string | null;
   /** Looks sharing a hash came from the same original photo (Compare Looks eligibility). */
   sourcePhotoHash: string | null;
   imageUrl: string;

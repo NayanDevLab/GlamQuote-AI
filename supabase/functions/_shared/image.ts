@@ -53,15 +53,25 @@ export function inspectImage(bytes: Uint8Array): ImageInfo | null {
   return inspectPng(bytes) ?? inspectJpeg(bytes);
 }
 
+export type ImageLimits = { maxLongSide: number; minShortSide: number };
+
+/** AI Nail Transfer: long side <= 4096. */
+export const NAIL_TRANSFER_LIMITS: ImageLimits = { maxLongSide: MAX_IMAGE_LONG_SIDE, minShortSide: 1 };
+/** AI Nail Virtual Try-On user photo: long side <= 2048, short side >= 256. */
+export const NAIL_VTO_LIMITS: ImageLimits = { maxLongSide: 2048, minShortSide: 256 };
+
 /** Returns a human-readable reason the image is unusable, or null if it meets the limits. */
-export function describeImageProblem(bytes: Uint8Array): string | null {
+export function describeImageProblem(bytes: Uint8Array, limits: ImageLimits = NAIL_TRANSFER_LIMITS): string | null {
   if (bytes.length === 0) return 'The file is empty.';
   if (bytes.length >= MAX_IMAGE_BYTES) return 'The file must be smaller than 10 MB.';
   const info = inspectImage(bytes);
   if (!info) return 'The file must be a JPEG or PNG image.';
   if (info.width < 1 || info.height < 1) return 'The image has no readable dimensions.';
-  if (Math.max(info.width, info.height) > MAX_IMAGE_LONG_SIDE) {
-    return `The image's longest side must be ${MAX_IMAGE_LONG_SIDE} px or less.`;
+  if (Math.max(info.width, info.height) > limits.maxLongSide) {
+    return `The image's longest side must be ${limits.maxLongSide} px or less.`;
+  }
+  if (Math.min(info.width, info.height) < limits.minShortSide) {
+    return `The image's shortest side must be at least ${limits.minShortSide} px.`;
   }
   return null;
 }

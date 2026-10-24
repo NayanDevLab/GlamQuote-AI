@@ -1,10 +1,13 @@
 # Minimal Supabase CLI config. Deploy with:
-#   npx supabase functions deploy nail-transfer lookbook --project-ref <your-project-ref>
+#   npx supabase functions deploy nail-transfer nail-vto lookbook --project-ref <your-project-ref>
 project_id = "glamquote-ai"
 
 # The platform rejects requests without a valid user JWT before the handler runs;
 # each handler then re-derives the caller's identity itself.
 [functions.nail-transfer]
+verify_jwt = true
+
+[functions.nail-vto]
 verify_jwt = true
 
 [functions.lookbook]

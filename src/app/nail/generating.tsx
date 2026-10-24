@@ -25,7 +25,9 @@ import {
 import { useNailSession, type NailAttempt } from '@/features/nail/nail-session';
 import {
   createNailTransferTask,
-  getNailTransferTask,
+  createNailVtoTask,
+  getNailTask,
+  type NailTaskKind,
   type NailTransferTask,
 } from '@/features/nail/nail-transfer-api';
 import { colors, shadows } from '@/theme';
@@ -40,20 +42,28 @@ const PATIENCE_MS = 5 * 60_000;
  * The attempt's idempotency key makes re-running this safe: the server returns the task it
  * already created instead of starting — and charging for — another.
  */
+const kindOf = (attempt: NailAttempt): NailTaskKind =>
+  attempt.design.source === 'custom' ? 'nail_vto' : 'nail_transfer';
+
 async function advance(attempt: NailAttempt): Promise<NailTransferTask> {
   const session = useNailSession.getState();
   let taskId = session.attempt?.idempotencyKey === attempt.idempotencyKey ? session.attempt.taskId : attempt.taskId;
   if (!taskId) {
-    const created = await createNailTransferTask({
-      hand: { uri: attempt.hand.uri, mimeType: 'image/jpeg' },
-      reference: { uri: attempt.design.image.uri, mimeType: 'image/jpeg' },
-      idempotencyKey: attempt.idempotencyKey,
-    });
+    const hand = { uri: attempt.hand.uri, mimeType: 'image/jpeg' } as const;
+    const { design, idempotencyKey } = attempt;
+    const created =
+      design.source === 'custom'
+        ? await createNailVtoTask({ hand, config: design.config, idempotencyKey })
+        : await createNailTransferTask({
+            hand,
+            reference: { uri: design.image.uri, mimeType: 'image/jpeg' },
+            idempotencyKey,
+          });
     taskId = created.taskId;
     session.setAttemptTask(taskId);
     if (created.status === 'running') return created;
   }
-  return getNailTransferTask(taskId);
+  return getNailTask(kindOf(attempt), taskId);
 }
 
 function IndeterminateBar() {
@@ -133,10 +143,12 @@ export default function NailGenerating() {
     if (task?.status === 'success' && task.resultUrl) {
       session.addPreview({
         taskId: task.taskId,
+        kind: kindOf(attempt),
         resultUrl: task.resultUrl,
         hand: attempt.hand,
         designName: attempt.design.name,
         designSource: attempt.design.source,
+        summary: attempt.design.source === 'custom' ? attempt.design.summary : [],
         createdAt: Date.now(),
         savedLookId: null,
       });
@@ -161,7 +173,8 @@ export default function NailGenerating() {
     return () => subscription.remove();
   }, [refetch]);
 
-  if (!attempt) return <Redirect href="/nail/review" />;
+  if (!attempt) return <Redirect href="/nail" />;
+  const isCustom = attempt.design.source === 'custom';
 
   const onAction = (action: NailErrorAction) => {
     if (action === 'keep_waiting') {
@@ -176,7 +189,7 @@ export default function NailGenerating() {
       } else {
         // The previous attempt ended, so this is a new, explicit generation with the same
         // inputs and consent. If the inputs are gone, send the user back to Review.
-        const next = session.startAttempt();
+        const next = session.startAttempt(attempt.design);
         if (next) {
           setTimedOut(false);
           setAttempt(next);
@@ -187,7 +200,7 @@ export default function NailGenerating() {
     } else if (action === 'change_photo') {
       router.replace('/nail/photo?edit=1');
     } else if (action === 'change_design') {
-      router.dismissTo('/nail/designs');
+      router.dismissTo(isCustom ? '/nail/editor' : '/nail/designs');
     } else {
       router.dismissTo('/nail');
     }
@@ -200,7 +213,13 @@ export default function NailGenerating() {
           <IconButton icon="arrowLeft" label="Back" strokeWidth={1.8} onPress={() => router.back()} />
           <Text className="pr-4 font-sans-semibold text-overline uppercase text-muted">Nail Studio</Text>
         </View>
-        <NailErrorState kind={failure} onAction={onAction} hand={attempt.hand} designImage={attempt.design.image} />
+        <NailErrorState
+          kind={failure}
+          onAction={onAction}
+          hand={attempt.hand}
+          designImage={attempt.design.source === 'reference' ? attempt.design.image : null}
+          custom={isCustom}
+        />
       </View>
     );
   }
@@ -241,10 +260,14 @@ export default function NailGenerating() {
             Creating Your Nail <Text className="font-serif-italic text-plum">Preview…</Text>
           </Text>
           <Text className="font-sans text-body-l text-muted">
-            We’re applying your selected design to your photo.
+            {isCustom
+              ? 'We’re creating a preview of your chosen color and finish on your photo.'
+              : 'We’re applying your selected design to your photo.'}
           </Text>
           <View className="self-start rounded-full bg-blush px-3 py-1.5">
-            <Text className="font-sans-semibold text-caption text-plum">YouCam AI Nail Transfer task</Text>
+            <Text className="font-sans-semibold text-caption text-plum">
+              {isCustom ? `YouCam AI Nail Virtual Try-On · ${attempt.design.name}` : 'YouCam AI Nail Transfer task'}
+            </Text>
           </View>
         </View>
 
@@ -278,8 +301,8 @@ export default function NailGenerating() {
           Stop Waiting
         </Text>
         <Text className="-mt-3 text-center font-sans text-body-s text-muted">
-          This preview has already been requested and will finish in the background. Your photo and
-          design stay selected.
+          This preview has already been requested and will finish in the background — leaving this
+          screen does not cancel it. Your photo and choices stay selected.
         </Text>
       </ScrollView>
     </View>

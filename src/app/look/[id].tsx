@@ -44,7 +44,14 @@ export default function SavedLookDetail() {
             </View>
           </View>
           <View className="gap-1">
-            <Text className="font-sans-semibold text-overline uppercase text-muted">Nails · Nail Transfer</Text>
+            <Text className="font-sans-semibold text-overline uppercase text-muted">
+              Nails ·{' '}
+              {look.effectType === 'nail_polish'
+                ? 'Nail Polish'
+                : look.effectType === 'press_on_nails'
+                  ? 'Press-On Nails'
+                  : 'Nail Transfer'}
+            </Text>
             <Text accessibilityRole="header" className="font-serif text-title-lg text-ink">
               {look.title}
             </Text>

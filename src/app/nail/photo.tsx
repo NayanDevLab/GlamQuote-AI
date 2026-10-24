@@ -24,7 +24,8 @@ type Notice = 'camera_denied' | 'failed' | null;
 export default function NailPhoto() {
   const insets = useSafeAreaInsets();
   // `edit=1` means we were opened from a later step to swap the photo, so Continue goes back there.
-  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  // `next=editor` continues into Customize My Nails instead of design selection.
+  const { edit, next } = useLocalSearchParams<{ edit?: string; next?: string }>();
   const hand = useNailSession((state) => state.hand);
   const setHand = useNailSession((state) => state.setHand);
   const [busy, setBusy] = useState(false);
@@ -40,7 +41,10 @@ export default function NailPhoto() {
     else if (outcome.kind !== 'canceled') setNotice(outcome.kind);
   };
 
-  const proceed = () => (edit ? router.back() : router.push('/nail/designs'));
+  const proceed = () => {
+    if (edit) router.back();
+    else router.push(next === 'editor' ? '/nail/editor' : '/nail/designs');
+  };
 
   return (
     <View className="flex-1 bg-canvas" style={{ paddingTop: insets.top }}>

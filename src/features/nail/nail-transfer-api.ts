@@ -1,5 +1,7 @@
 import { invokeEdgeFunction } from '@/lib/supabase';
 
+import type { NailVtoConfig } from './vto';
+
 /**
  * Client for the `nail-transfer` Edge Function (YouCam AI Nail Transfer).
  *
@@ -19,6 +21,8 @@ export type NailTransferStatus = 'running' | 'success' | 'error';
 
 export type NailTransferErrorCode =
   | 'no_hand_detected'
+  | 'nail_too_small'
+  | 'unsupported_setting'
   | 'invalid_image'
   | 'content_rejected'
   | 'inference_failed'
@@ -61,10 +65,34 @@ export function createNailTransferTask(input: {
   return invokeEdgeFunction<NailTransferTask>('nail-transfer', { method: 'POST', body: form });
 }
 
+/** Which YouCam feature produced a task: AI Nail Transfer or AI Nail Virtual Try-On. */
+export type NailTaskKind = 'nail_transfer' | 'nail_vto';
+
+const FUNCTION_FOR_KIND: Record<NailTaskKind, string> = {
+  nail_transfer: 'nail-transfer',
+  nail_vto: 'nail-vto',
+};
+
+/**
+ * Starts one Nail Virtual Try-On preview (1 YouCam unit) for a Nail Polish or Press-On
+ * customization. Same idempotency rules as `createNailTransferTask`.
+ */
+export function createNailVtoTask(input: {
+  hand: LocalImage;
+  config: NailVtoConfig;
+  idempotencyKey: string;
+}): Promise<NailTransferTask> {
+  const form = new FormData();
+  form.append('idempotency_key', input.idempotencyKey);
+  form.append('hand', filePart(input.hand, 'hand'));
+  form.append('config', JSON.stringify(input.config));
+  return invokeEdgeFunction<NailTransferTask>('nail-vto', { method: 'POST', body: form });
+}
+
 /** Reads the current state of a task this guest created. YouCam suggests polling about every 10 s. */
-export function getNailTransferTask(taskId: string): Promise<NailTransferTask> {
+export function getNailTask(kind: NailTaskKind, taskId: string): Promise<NailTransferTask> {
   return invokeEdgeFunction<NailTransferTask>(
-    `nail-transfer?task_id=${encodeURIComponent(taskId)}`,
+    `${FUNCTION_FOR_KIND[kind]}?task_id=${encodeURIComponent(taskId)}`,
     { method: 'GET' },
   );
 }

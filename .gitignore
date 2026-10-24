@@ -38,6 +38,9 @@ yarn-error.*
 # smoke-test output (may contain real result images)
 .smoke/
 
+# Supabase CLI local state (linked project, CLI version)
+supabase/.temp/
+
 # typescript
 *.tsbuildinfo
 

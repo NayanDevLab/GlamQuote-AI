@@ -6,6 +6,11 @@
 //   node scripts/nail-transfer-smoke.mjs run-function <hand> <reference> --confirm-1-unit
 //       Full path: guest sign-in -> deployed Edge Function -> YouCam -> result download.
 //
+//   node scripts/nail-transfer-smoke.mjs run-vto-polish <hand> --confirm-1-unit
+//   node scripts/nail-transfer-smoke.mjs run-vto-press  <hand> --confirm-1-unit
+//       Nail Virtual Try-On through the deployed nail-vto function, using the app's default
+//       Nail Polish / Press-On customization.
+//
 //   node scripts/nail-transfer-smoke.mjs run-direct <hand> <reference> --confirm-1-unit
 //       Calls YouCam directly with the same adapter the Edge Function uses (no Supabase needed).
 //
@@ -17,7 +22,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { basename } from 'node:path';
 
-import { describeImageProblem, inspectImage } from '../supabase/functions/_shared/image.ts';
+import { buildPolishConfig, buildPressConfig, DEFAULT_POLISH, DEFAULT_PRESS } from '../src/features/nail/vto.ts';
+import { describeImageProblem, inspectImage, NAIL_VTO_LIMITS } from '../supabase/functions/_shared/image.ts';
 import { createYouCamClient, YouCamError } from '../supabase/functions/_shared/youcam.ts';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
@@ -42,11 +48,11 @@ function requireEnv(name, where) {
   return value;
 }
 
-function loadImage(label, path) {
+function loadImage(label, path, limits) {
   if (!path) stop(`Missing the ${label} image path.`);
   if (!existsSync(path)) stop(`${label} image not found: ${path}`);
   const bytes = new Uint8Array(readFileSync(path));
-  const problem = describeImageProblem(bytes);
+  const problem = describeImageProblem(bytes, limits);
   if (problem) stop(`${label} image (${basename(path)}) is not usable: ${problem}`);
   const info = inspectImage(bytes);
   console.log(`  ${label}: ${basename(path)} — ${info.format.toUpperCase()} ${info.width}×${info.height}, ${(bytes.length / 1024).toFixed(0)} KB`);
@@ -58,13 +64,13 @@ function requireConfirmation() {
   stop('This creates one real YouCam task and consumes 1 unit. Re-run with --confirm-1-unit to proceed.');
 }
 
-async function saveResult(resultUrl) {
+async function saveResult(resultUrl, name = 'nail-transfer-result') {
   const response = await fetch(resultUrl);
   if (!response.ok) stop(`Result download failed with HTTP ${response.status}.`);
   const bytes = new Uint8Array(await response.arrayBuffer());
   const info = inspectImage(bytes);
   mkdirSync(OUTPUT_DIR, { recursive: true });
-  const file = `${OUTPUT_DIR}/nail-transfer-result.${info?.format === 'png' ? 'png' : 'jpg'}`;
+  const file = `${OUTPUT_DIR}/${name}.${info?.format === 'png' ? 'png' : 'jpg'}`;
   writeFileSync(file, bytes);
   console.log(`  result host: ${new URL(resultUrl).host}`);
   console.log(`  content-type: ${response.headers.get('content-type')}`);
@@ -189,11 +195,60 @@ async function runFunction() {
   console.log('\n✔ Guest auth, Edge Function, YouCam task, polling and result download all worked.');
 }
 
-const commands = { check, 'run-direct': runDirect, 'run-function': runFunction };
+/** Signs in as a new guest and returns a helper that calls an Edge Function or stops with its error. */
+async function guestInvoker() {
+  const url = requireEnv('EXPO_PUBLIC_SUPABASE_URL', '.env');
+  const publishableKey = requireEnv('EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY', '.env');
+  const { createClient, FunctionsHttpError } = await import('@supabase/supabase-js');
+  const supabase = createClient(url, publishableKey, { auth: { persistSession: false } });
+  const { error: signInError } = await supabase.auth.signInAnonymously();
+  if (signInError) stop(`Guest sign-in failed: ${signInError.message}. Enable Anonymous Sign-Ins in the Supabase dashboard.`);
+  console.log('  ✔ guest session created');
+  return async (name, options) => {
+    const { data, error } = await supabase.functions.invoke(name, options);
+    if (error instanceof FunctionsHttpError) {
+      const body = await error.context.json().catch(() => null);
+      stop(`Edge Function answered HTTP ${error.context.status}: ${body?.error?.code ?? 'unknown'} — ${body?.error?.message ?? ''}`);
+    }
+    if (error) stop(`Edge Function call failed: ${error.message}`);
+    return data;
+  };
+}
+
+async function runVto(config) {
+  console.log('Inputs:');
+  const hand = loadImage('hand', handPath, NAIL_VTO_LIMITS);
+  console.log(`  customization: ${config.effectType}, ${config.effects.length} fingers, ${config.effects[0].color} ${config.effects[0].texture}`);
+  requireConfirmation();
+
+  console.log('\nSigning in as a new guest (anonymous)…');
+  const invoke = await guestInvoker();
+  const form = new FormData();
+  form.append('idempotency_key', randomUUID());
+  form.append('hand', new Blob([hand.bytes]), `hand.${hand.info.format}`);
+  form.append('config', JSON.stringify(config));
+
+  console.log(`Creating ONE Nail VTO task (${config.effectType}) through the Edge Function (1 unit)…`);
+  const created = await invoke('nail-vto', { method: 'POST', body: form });
+  console.log(`  ✔ task ${created.taskId} — status: ${created.status}`);
+  const state = await poll(() => invoke(`nail-vto?task_id=${created.taskId}`, { method: 'GET' }));
+  if (state.status === 'error') stop(`The task ended in an error: ${state.errorCode}.`);
+  console.log('\nResult:');
+  await saveResult(state.resultUrl, `nail-vto-${config.effectType}`);
+  console.log('\n✔ Guest auth, Edge Function, YouCam Nail VTO task, polling and result download all worked.');
+}
+
+const commands = {
+  check,
+  'run-direct': runDirect,
+  'run-function': runFunction,
+  'run-vto-polish': () => runVto(buildPolishConfig(DEFAULT_POLISH)),
+  'run-vto-press': () => runVto(buildPressConfig(DEFAULT_PRESS)),
+};
 
 try {
   if (!commands[command]) {
-    stop('Usage: node scripts/nail-transfer-smoke.mjs <check | run-function | run-direct> [hand] [reference] [--confirm-1-unit]');
+    stop('Usage: node scripts/nail-transfer-smoke.mjs <check | run-function | run-vto-polish | run-vto-press | run-direct> [hand] [reference] [--confirm-1-unit]');
   }
   await commands[command]();
 } catch (error) {

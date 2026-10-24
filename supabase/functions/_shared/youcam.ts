@@ -2,6 +2,7 @@
 //
 // Verified against the official reference on 2026-10-12:
 //   https://docs.perfectcorp.com/reference/ai_nail_transfer  (task + polling)
+//   https://docs.perfectcorp.com/reference/ai_nail_vto       (task + polling)
 //   https://docs.perfectcorp.com/_bundle/reference/file.json (File API)
 //
 // Only documented endpoints and parameter names are used. This file is plain TypeScript
@@ -44,6 +45,9 @@ export type YouCamTaskState =
   | { status: 'running' }
   | { status: 'success'; resultUrl: string }
   | { status: 'error'; providerCode: string | null };
+
+/** Task families: AI Nail Transfer and AI Nail Virtual Try-On. */
+export type YouCamTaskFeature = 'ai-nail' | 'nail-vto';
 
 type JsonObject = Record<string, unknown>;
 
@@ -151,24 +155,38 @@ export function createYouCamClient(apiKey: string) {
     return fileIds;
   }
 
-  /** `POST /s2s/v2.0/task/ai-nail` — consumes 1 unit. Returns the provider `task_id`. */
-  async function createNailTransferTask(input: { srcFileId: string; refFileId: string }): Promise<string> {
-    const data = await call('POST', '/s2s/v2.0/task/ai-nail', {
-      src_file_id: input.srcFileId,
-      ref_file_id: input.refFileId,
-    });
+  async function createTask(feature: YouCamTaskFeature, body: JsonObject): Promise<string> {
+    const data = await call('POST', `/s2s/v2.0/task/${feature}`, body);
     if (typeof data.task_id !== 'string' || data.task_id.length === 0) {
       throw new YouCamError('unexpected_response', null, 'YouCam returned no task_id.');
     }
     return data.task_id;
   }
 
+  /** `POST /s2s/v2.0/task/ai-nail` — AI Nail Transfer, consumes 1 unit. Returns the provider `task_id`. */
+  function createNailTransferTask(input: { srcFileId: string; refFileId: string }): Promise<string> {
+    return createTask('ai-nail', { src_file_id: input.srcFileId, ref_file_id: input.refFileId });
+  }
+
   /**
-   * `GET /s2s/v2.0/task/ai-nail/{task_id}`. `task_status` is running | success | error.
+   * `POST /s2s/v2.0/task/nail-vto` — AI Nail Virtual Try-On, consumes 1 unit. `effects` must
+   * already be validated (see nail-vto.ts); `version` is required by the API.
+   */
+  function createNailVtoTask(input: { srcFileId: string; effectType: string; effects: JsonObject[] }): Promise<string> {
+    return createTask('nail-vto', {
+      src_file_id: input.srcFileId,
+      version: '1.0',
+      effect_type: input.effectType,
+      effects: input.effects,
+    });
+  }
+
+  /**
+   * `GET /s2s/v2.0/task/{feature}/{task_id}`. `task_status` is running | success | error.
    * On success the download URL (valid for 2 hours, re-issuable by polling again) is in `results.url`.
    */
-  async function getNailTransferTask(taskId: string): Promise<YouCamTaskState> {
-    const data = await call('GET', `/s2s/v2.0/task/ai-nail/${encodeURIComponent(taskId)}`);
+  async function getTask(feature: YouCamTaskFeature, taskId: string): Promise<YouCamTaskState> {
+    const data = await call('GET', `/s2s/v2.0/task/${feature}/${encodeURIComponent(taskId)}`);
     if (data.task_status === 'running') return { status: 'running' };
     if (data.task_status === 'error') {
       return { status: 'error', providerCode: typeof data.error === 'string' ? data.error : null };
@@ -183,7 +201,9 @@ export function createYouCamClient(apiKey: string) {
     throw new YouCamError('unexpected_response', null, 'YouCam returned an unknown task_status.');
   }
 
-  return { uploadFiles, createNailTransferTask, getNailTransferTask };
+  const getNailTransferTask = (taskId: string) => getTask('ai-nail', taskId);
+
+  return { uploadFiles, createNailTransferTask, createNailVtoTask, getTask, getNailTransferTask };
 }
 
 export type YouCamClient = ReturnType<typeof createYouCamClient>;
