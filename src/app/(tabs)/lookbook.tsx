@@ -23,7 +23,7 @@ function LookCard({ look }: { look: SavedLook }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${look.title}, saved ${lookArea(look) === 'Hair' ? 'hairstyle' : 'nail'} preview`}
+      accessibilityLabel={`${look.title}, saved ${look.kind === 'hair_color' ? 'hair color' : look.kind === 'hairstyle' ? 'hairstyle' : 'nail'} preview`}
       onPress={() => router.push({ pathname: '/look/[id]', params: { id: look.id } })}
       style={shadows.card}
       className="flex-1 rounded-lg border border-blush bg-card p-2 active:bg-canvas">

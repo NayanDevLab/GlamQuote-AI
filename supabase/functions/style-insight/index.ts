@@ -43,11 +43,14 @@ type TaskRow = {
 
 type FailureCode = 'gemini_quota' | 'gemini_unavailable' | 'gemini_misconfigured' | 'invalid_ai_response';
 
+/** `detail` is diagnostic only: an HTTP status and the provider's status word — never content. */
 class GeminiFailure extends Error {
   readonly code: FailureCode;
-  constructor(code: FailureCode) {
+  readonly detail: { http?: number; provider_status?: string | null; reason?: string };
+  constructor(code: FailureCode, detail: GeminiFailure['detail'] = {}) {
     super(code);
     this.code = code;
+    this.detail = detail;
   }
 }
 
@@ -90,26 +93,29 @@ async function callGemini(apiKey: string, model: string, message: string, schema
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-  } catch {
-    throw new GeminiFailure('gemini_unavailable');
+  } catch (error) {
+    throw new GeminiFailure('gemini_unavailable', { reason: error instanceof Error ? error.name : 'fetch_failed' });
   }
-  if (response.status === 429) throw new GeminiFailure('gemini_quota');
-  if (response.status >= 400 && response.status < 500) {
+  if (!response.ok) {
     const body = await response.json().catch(() => null);
-    // Only the provider's status word is logged — never the prompt or the key.
-    console.error('gemini request rejected', { status: response.status, reason: body?.error?.status ?? null });
-    throw new GeminiFailure('gemini_misconfigured');
+    // Only the HTTP status and the provider's status word are kept — never the prompt or key.
+    const detail = { http: response.status, provider_status: body?.error?.status ?? null };
+    console.error('gemini request failed', detail);
+    if (response.status === 429) throw new GeminiFailure('gemini_quota', detail);
+    if (response.status < 500) throw new GeminiFailure('gemini_misconfigured', detail);
+    throw new GeminiFailure('gemini_unavailable', detail);
   }
-  if (!response.ok) throw new GeminiFailure('gemini_unavailable');
 
   const body = await response.json().catch(() => null);
   const parts: { text?: string }[] = body?.candidates?.[0]?.content?.parts ?? [];
   const text = parts.map((part) => part.text ?? '').join('');
-  if (!text.trim()) throw new GeminiFailure('invalid_ai_response');
+  if (!text.trim()) {
+    throw new GeminiFailure('invalid_ai_response', { reason: body?.candidates?.[0]?.finishReason ?? 'empty' });
+  }
   try {
     return JSON.parse(text);
   } catch {
-    throw new GeminiFailure('invalid_ai_response');
+    throw new GeminiFailure('invalid_ai_response', { reason: 'not_json' });
   }
 }
 
@@ -197,7 +203,7 @@ async function handle(req: Request, caller: Caller): Promise<Response> {
     const checked = input.question ? validateAnswer(raw, hexes) : validateInsight(raw, hexes);
     if (!checked.ok) {
       console.error('style insight rejected', { reason: checked.reason });
-      await record('invalid');
+      await record('invalid', { failure: 'validation', reason: checked.reason });
       return fail(502, 'invalid_ai_response', 'The AI reply didn’t pass our checks, so we’re not showing it.');
     }
     const payload = 'insight' in checked ? { insight: checked.insight } : { answer: checked.answer };
@@ -205,7 +211,8 @@ async function handle(req: Request, caller: Caller): Promise<Response> {
     return json({ ...payload, cached: false });
   } catch (error) {
     const code: FailureCode = error instanceof GeminiFailure ? error.code : 'gemini_unavailable';
-    await record('error');
+    // Diagnostic only (failure code, HTTP status, provider status word) — no prompt or reply.
+    await record('error', { failure: code, ...(error instanceof GeminiFailure ? error.detail : {}) });
     if (code === 'gemini_quota') return fail(429, code, 'You’ve used today’s style insights. They refresh tomorrow.');
     if (code === 'invalid_ai_response')
       return fail(502, code, 'The AI reply didn’t pass our checks, so we’re not showing it.');

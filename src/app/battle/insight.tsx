@@ -291,14 +291,10 @@ export default function StyleInsight() {
 
         <InsightCard title={balanced ? 'Balanced view' : 'Style insight'} subtitle={BASED_ON} badge="AI text guidance">
           <InsightSection letter="A" title={balanced ? 'Look A · known strengths' : 'Why Look A may suit you'}>
-            <Text className="font-sans text-body-m text-ink">
-              <Text className="font-sans-semibold">{a.title}</Text> — {insight.look_a_reason}
-            </Text>
+            <Text className="font-sans text-body-m text-ink">{insight.look_a_reason}</Text>
           </InsightSection>
           <InsightSection letter="B" title={balanced ? 'Look B · known strengths' : 'Why Look B may suit you'}>
-            <Text className="font-sans text-body-m text-ink">
-              <Text className="font-sans-semibold">{b.title}</Text> — {insight.look_b_reason}
-            </Text>
+            <Text className="font-sans text-body-m text-ink">{insight.look_b_reason}</Text>
           </InsightSection>
           <InsightSection title="Trade-offs to consider">
             <Bullets items={insight.tradeoffs} />
