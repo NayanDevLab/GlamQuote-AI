@@ -158,8 +158,3 @@ export const useHairColorSession = create<HairColorSession>()(
     },
   ),
 );
-
-/** Hair color previews of the same original photo — the only ones that may be compared. */
-export function previewsFromSamePhoto(previews: HairColorPreview[], preview: HairColorPreview) {
-  return previews.filter((p) => p.photo.uri === preview.photo.uri);
-}

@@ -66,6 +66,12 @@ export default function SavedLookDetail() {
               to you
             </Text>
           </View>
+          {look.note ? (
+            <View className="gap-1 rounded-lg border border-blush bg-card p-4">
+              <Text className="font-sans-semibold text-overline uppercase text-muted">Your note</Text>
+              <Text className="font-sans text-body-m text-ink">{look.note}</Text>
+            </View>
+          ) : null}
           <Text className="font-sans text-body-s text-muted">AI preview only. Actual results may vary.</Text>
         </ScrollView>
       ) : (

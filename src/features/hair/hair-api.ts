@@ -25,6 +25,10 @@ export type HairTask = {
   resultUrl?: string;
   /** Present only on error. */
   errorCode?: string;
+  /** On success: the source photo's hash (Look Battle pairing) and the validated settings. */
+  sourcePhotoHash?: string | null;
+  effectType?: string | null;
+  config?: unknown;
 };
 
 export const HAIR_TEMPLATES_QUERY_KEY = ['hair-templates'] as const;

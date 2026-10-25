@@ -10,7 +10,7 @@ import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
 import { LOOKBOOK_QUERY_KEY, saveLook } from '@/features/lookbook/lookbook-api';
 import { FooterBar, NailErrorState } from '@/features/nail/components';
-import { previewsFromSamePhoto, useNailSession } from '@/features/nail/nail-session';
+import { useNailSession } from '@/features/nail/nail-session';
 import { getNailTask } from '@/features/nail/nail-transfer-api';
 import { EdgeFunctionError } from '@/lib/supabase';
 import { colors } from '@/theme';
@@ -20,7 +20,6 @@ export default function NailResult() {
   const queryClient = useQueryClient();
   const { taskId } = useLocalSearchParams<{ taskId: string }>();
   const preview = useNailSession((state) => state.previews.find((p) => p.taskId === taskId));
-  const previews = useNailSession((state) => state.previews);
   const updatePreview = useNailSession((state) => state.updatePreview);
   // 'refreshing' = the temporary link stopped loading and a new one is being requested.
   const [media, setMedia] = useState<'ok' | 'refreshing' | 'unavailable'>('ok');
@@ -60,7 +59,6 @@ export default function NailResult() {
 
   const isVto = preview.kind === 'nail_vto';
   const designRoute = isVto ? '/nail/editor' : '/nail/designs';
-  const comparable = previewsFromSamePhoto(previews, preview).length >= 2;
   const saved = preview.savedLookId !== null;
   const saveError = save.error
     ? save.error instanceof EdgeFunctionError
@@ -160,10 +158,13 @@ export default function NailResult() {
               variant="secondary"
               onPress={() => router.dismissTo(designRoute)}
             />
-            {/* Compare needs two real previews of the same original photo. */}
-            {comparable ? (
-              <Button label="Compare Looks" variant="secondary" onPress={() => router.push('/pending/look-battle')} />
-            ) : null}
+            {/* Look Battle pairs it with another preview of the same photo, or says one is needed. */}
+            <Button
+              label="Compare Looks"
+              variant="secondary"
+              icon="compare"
+              onPress={() => router.push({ pathname: '/battle/compare', params: { from: preview.taskId } })}
+            />
           </FooterBar>
         </>
       )}

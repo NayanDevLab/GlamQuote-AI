@@ -11,6 +11,10 @@ export type SavedLook = {
   designId: string | null;
   /** Nail VTO: 'nail_polish' or 'press_on_nails'. Hair Color: 'full' or 'ombre'. */
   effectType: string | null;
+  /** The validated settings the server sent to YouCam (null for Nail Transfer). */
+  config: unknown;
+  /** The user's optional personal note. */
+  note: string | null;
   /** Looks sharing a hash came from the same original photo (Compare Looks eligibility). */
   sourcePhotoHash: string | null;
   imageUrl: string;
@@ -42,6 +46,8 @@ export async function saveLook(input: {
   title: string;
   designSource: SavedLook['designSource'];
   designId?: string;
+  /** Saving an already-saved look with a new note only updates the note. */
+  note?: string;
 }): Promise<SavedLook> {
   const { look } = await invokeEdgeFunction<{ look: SavedLook }>('lookbook', {
     method: 'POST',

@@ -83,7 +83,7 @@ export default function HairSaved() {
             <Text className="font-sans text-body-s text-muted">
               Both made from the same photo. Look Battle compares your generated previews only.
             </Text>
-            <Button label="Compare Looks" variant="secondary" onPress={() => router.push('/pending/look-battle')} />
+            <Button label="Compare Looks" variant="secondary" onPress={() => router.push({ pathname: '/battle/compare', params: { from: preview.taskId } })} />
           </View>
         ) : null}
       </ScrollView>

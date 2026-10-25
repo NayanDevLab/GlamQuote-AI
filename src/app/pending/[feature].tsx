@@ -10,7 +10,6 @@ import { Overline } from '@/components/ui/typography';
 // (and this file deleted) as the corresponding flow is implemented.
 const FEATURES: Record<string, string> = {
   'hair-studio': 'Hair Studio',
-  'look-battle': 'Look Battle',
   'look-finder': 'Look Finder',
   settings: 'Settings',
   help: 'Help',

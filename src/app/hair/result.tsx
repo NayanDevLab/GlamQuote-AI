@@ -10,7 +10,7 @@ import { FooterBar } from '@/components/ui/footer-bar';
 import { IconButton } from '@/components/ui/icon-button';
 import { HairErrorState } from '@/features/hair/components';
 import { getHairstyleTask } from '@/features/hair/hair-api';
-import { previewsFromSameSelfie, useHairSession } from '@/features/hair/hair-session';
+import { useHairSession } from '@/features/hair/hair-session';
 import { LOOKBOOK_QUERY_KEY, saveLook } from '@/features/lookbook/lookbook-api';
 import { EdgeFunctionError } from '@/lib/supabase';
 
@@ -20,7 +20,6 @@ export default function HairResult() {
   const queryClient = useQueryClient();
   const { taskId } = useLocalSearchParams<{ taskId: string }>();
   const preview = useHairSession((state) => state.previews.find((p) => p.taskId === taskId));
-  const previews = useHairSession((state) => state.previews);
   const updatePreview = useHairSession((state) => state.updatePreview);
   // 'refreshing' = the temporary link stopped loading and a new one is being requested.
   const [media, setMedia] = useState<'ok' | 'refreshing' | 'unavailable'>('ok');
@@ -64,7 +63,6 @@ export default function HairResult() {
     setMedia('unavailable');
   };
 
-  const comparable = previewsFromSameSelfie(previews, preview).length >= 2;
   const saved = preview.savedLookId !== null;
   const saveError = save.error
     ? save.error instanceof EdgeFunctionError
@@ -140,16 +138,14 @@ export default function HairResult() {
                 className="flex-1"
                 onPress={() => router.dismissTo('/hair/styles')}
               />
-              {/* Compare needs two real previews of the same original photo. */}
-              {comparable ? (
-                <Button
-                  label="Compare Looks"
-                  variant="secondary"
-                  icon="compare"
-                  className="flex-1"
-                  onPress={() => router.push('/pending/look-battle')}
-                />
-              ) : null}
+              {/* Look Battle pairs it with another preview of the same photo, or says one is needed. */}
+              <Button
+                label="Compare Looks"
+                variant="secondary"
+                icon="compare"
+                className="flex-1"
+                onPress={() => router.push({ pathname: '/battle/compare', params: { from: preview.taskId } })}
+              />
             </View>
           </FooterBar>
         </>

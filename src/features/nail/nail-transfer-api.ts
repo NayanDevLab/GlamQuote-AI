@@ -39,6 +39,10 @@ export type NailTransferTask = {
   resultUrl?: string;
   /** Present only on error. */
   errorCode?: NailTransferErrorCode;
+  /** On success: the source photo's hash (Look Battle pairing) and the validated settings. */
+  sourcePhotoHash?: string | null;
+  effectType?: string | null;
+  config?: unknown;
 };
 
 /**

@@ -78,9 +78,17 @@ export default function Lookbook() {
 
       {looks.length > 0 ? (
         <ScrollView contentContainerClassName="gap-3 px-5 pb-6 pt-4" showsVerticalScrollIndicator={false}>
-          <Text className="font-sans-semibold text-overline uppercase text-muted">
-            {looks.length} saved {looks.length === 1 ? 'look' : 'looks'}
-          </Text>
+          <View className="flex-row items-center justify-between">
+            <Text className="font-sans-semibold text-overline uppercase text-muted">
+              {looks.length} saved {looks.length === 1 ? 'look' : 'looks'}
+            </Text>
+            <Text
+              accessibilityRole="button"
+              onPress={() => router.push('/battle')}
+              className="py-1.5 pl-3 font-sans-semibold text-label-s text-plum">
+              Compare Looks
+            </Text>
+          </View>
           {rows.map((row) => (
             <View key={row[0].id} className="flex-row gap-3">
               {row.map((look) => (

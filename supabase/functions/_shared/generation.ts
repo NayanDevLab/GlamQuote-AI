@@ -63,9 +63,22 @@ type TaskRow = {
   provider_task_id: string | null;
   error_code: string | null;
   created_at: string;
+  source_photo_hash: string | null;
+  effect_type: string | null;
+  config: unknown;
 };
 
-const TASK_COLUMNS = 'id, kind, status, provider_task_id, error_code, created_at';
+const TASK_COLUMNS = 'id, kind, status, provider_task_id, error_code, created_at, source_photo_hash, effect_type, config';
+
+/**
+ * What a finished preview was made from, for Look Battle: the source photo's hash (never the
+ * photo) and the validated settings the server sent to YouCam.
+ */
+const resultDetails = (row: TaskRow) => ({
+  sourcePhotoHash: row.source_photo_hash,
+  effectType: row.effect_type,
+  config: row.config,
+});
 
 /** Reads one image part and checks it against the feature's documented limits. */
 export async function readImagePart(
@@ -337,7 +350,9 @@ async function getTask(
   // Running, or success (the 2-hour download URL is re-issued on each call and never stored).
   try {
     const refreshed = await refreshTask(db, youcam, row);
-    if (refreshed.row.status === 'success') return json(publicTask(refreshed.row, { resultUrl: refreshed.resultUrl }));
+    if (refreshed.row.status === 'success') {
+      return json(publicTask(refreshed.row, { resultUrl: refreshed.resultUrl, ...resultDetails(refreshed.row) }));
+    }
     if (refreshed.row.status === 'error') return json(publicTask(refreshed.row, { errorCode: refreshed.row.error_code }));
     return json(publicTask(refreshed.row));
   } catch (caught) {

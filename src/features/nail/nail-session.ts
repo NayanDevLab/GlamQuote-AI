@@ -201,11 +201,3 @@ export const useNailSession = create<NailSession>()(
     },
   ),
 );
-
-/**
- * Previews made from the same original photo — the only ones Compare Looks may pair. Nail
- * Polish, Press-On and Nail Transfer previews all qualify; hair previews never share a photo.
- */
-export function previewsFromSamePhoto(previews: NailPreview[], preview: NailPreview): NailPreview[] {
-  return previews.filter((p) => p.hand.uri === preview.hand.uri);
-}

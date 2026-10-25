@@ -1,6 +1,7 @@
 // My Lookbook Edge Function.
 //
-//   POST /lookbook   { taskId, title, designSource, designId? }  -> { look }   (explicit Save)
+//   POST /lookbook   { taskId, title, designSource, designId?, note? }  -> { look }   (explicit Save;
+//                    saving an already-saved look again only updates its note)
 //   GET  /lookbook                                               -> { looks }
 //
 // Save copies the genuine YouCam result for one of the caller's own successful tasks into
@@ -22,6 +23,7 @@ type LookRow = {
   design_id: string | null;
   effect_type: string | null;
   config: unknown;
+  note: string | null;
   source_photo_hash: string | null;
   image_public_id: string;
   image_format: string;
@@ -41,7 +43,7 @@ type TaskRow = {
 };
 
 const LOOK_COLUMNS =
-  'id, task_id, kind, title, design_source, design_id, effect_type, config, source_photo_hash, image_public_id, image_format, image_width, image_height, created_at';
+  'id, task_id, kind, title, design_source, design_id, effect_type, config, note, source_photo_hash, image_public_id, image_format, image_width, image_height, created_at';
 
 // reference/catalogue: Nail Transfer · custom: Nail VTO or a custom hair color ·
 // template: a YouCam hairstyle template · preset: a YouCam hair color preset.
@@ -68,6 +70,8 @@ async function publicLook(row: LookRow, cloudinary: Cloudinary) {
     // What the server validated and sent to YouCam (Nail VTO customization, hairstyle template).
     effectType: row.effect_type,
     config: row.config,
+    // The user's own note, added when they saved it (e.g. from a Look Battle favorite).
+    note: row.note,
     // Looks with the same hash came from the same original photo (Compare Looks eligibility).
     sourcePhotoHash: row.source_photo_hash,
     imageUrl: await cloudinary.signedImageUrl(row.image_public_id, row.image_format),
@@ -95,6 +99,7 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
   const { taskId, designSource } = input;
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   const designId = typeof input.designId === 'string' ? input.designId.slice(0, 80) : null;
+  const note = typeof input.note === 'string' && input.note.trim() ? input.note.trim().slice(0, 280) : null;
   if (typeof taskId !== 'string' || !UUID_PATTERN.test(taskId)) {
     return fail(400, 'invalid_request', 'taskId must be a UUID.');
   }
@@ -108,7 +113,21 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
     db.from('saved_looks').select(LOOK_COLUMNS).eq('user_id', userId).eq('task_id', taskId).maybeSingle<LookRow>();
   const existing = await findExisting();
   if (existing.error) return fail(500, 'server_error', 'Could not check your Lookbook.');
-  if (existing.data) return json({ look: await publicLook(existing.data, cloudinary), alreadySaved: true });
+  if (existing.data) {
+    // Already saved: nothing is uploaded again; only a newly written note is recorded.
+    if (note && note !== existing.data.note) {
+      const { data: updated, error: noteError } = await db
+        .from('saved_looks')
+        .update({ note })
+        .eq('id', existing.data.id)
+        .eq('user_id', userId)
+        .select(LOOK_COLUMNS)
+        .single<LookRow>();
+      if (noteError || !updated) return fail(500, 'server_error', 'Could not save your note. Please try again.');
+      return json({ look: await publicLook(updated, cloudinary), alreadySaved: true });
+    }
+    return json({ look: await publicLook(existing.data, cloudinary), alreadySaved: true });
+  }
 
   // Only a genuine, successful preview that belongs to this guest can be saved.
   const { data: task, error: taskError } = await db
@@ -173,6 +192,7 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
       // Copied from the task, so saved details always match what was actually generated.
       effect_type: task.effect_type,
       config: task.config,
+      note,
       source_photo_hash: task.source_photo_hash,
       image_public_id: asset.publicId,
       image_format: asset.format,

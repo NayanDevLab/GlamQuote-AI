@@ -48,10 +48,10 @@ One-time setup for a Supabase project:
 5. `npx supabase secrets set YOUCAM_API_KEY=… CLOUDINARY_CLOUD_NAME=… CLOUDINARY_API_KEY=… CLOUDINARY_API_SECRET=… --project-ref <ref>`
 6. `npx supabase functions deploy nail-transfer nail-vto hairstyle hair-color lookbook --project-ref <ref>`
 
-The live project (`leerfkybeaxnghmdrbbw`) is set up: all five migrations were applied on 2026-10-24 through the Supabase SQL API, not `supabase db push`. Before ever using `db push` against it, record them as applied first, or the CLI will try to run them again:
+The live project (`leerfkybeaxnghmdrbbw`) is set up: all six migrations were applied on 2026-10-24 through the Supabase SQL API, not `supabase db push`. Before ever using `db push` against it, record them as applied first, or the CLI will try to run them again:
 
 ```bash
-npx supabase migration repair --status applied 20261012000000 20261012010000 20261012020000 20261024000000 20261024010000 --project-ref leerfkybeaxnghmdrbbw
+npx supabase migration repair --status applied 20261012000000 20261012010000 20261012020000 20261024000000 20261024010000 20261025000000 --project-ref leerfkybeaxnghmdrbbw
 ```
 
 Without Docker, deploy with `--use-api`. Only the provider keys are function secrets; set them by name rather than uploading all of `.env`.
