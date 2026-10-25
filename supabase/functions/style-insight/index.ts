@@ -21,6 +21,7 @@ import {
   lookFacts,
   parseInput,
   PROMPT_VERSION,
+  replyShape,
   SYSTEM_INSTRUCTION,
   validateAnswer,
   validateInsight,
@@ -147,7 +148,7 @@ async function handle(req: Request, caller: Caller): Promise<Response> {
     const checked = input.question ? validateAnswer(raw, hexes) : validateInsight(raw, hexes);
     if (!checked.ok) {
       console.error('style insight rejected', { reason: checked.reason });
-      await record('invalid', { failure: 'validation', reason: checked.reason });
+      await record('invalid', { failure: 'validation', reason: checked.reason, shape: replyShape(raw) });
       return fail(502, 'invalid_ai_response', 'The AI reply didn’t pass our checks, so we’re not showing it.');
     }
     const payload = 'insight' in checked ? { insight: checked.insight } : { answer: checked.answer };
