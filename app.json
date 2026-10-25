@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.nayanrdeveloper.glamquoteai",
       "adaptiveIcon": {
         "backgroundColor": "#FAF7F3",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -46,6 +47,13 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#FAF7F3"
+    "backgroundColor": "#FAF7F3",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ea32e33d-551b-4c90-a0f4-c7ab7fdd13ae"
+      }
+    },
+    "owner": "nayanrdeveloper"
   }
 }

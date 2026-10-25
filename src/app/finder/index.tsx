@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,6 +36,13 @@ export default function LookFinderPreferences() {
   const tutorialSeen = useLookFinderSession((state) => state.tutorialSeen);
   const { setAnswer, clearAnswers, markTutorialSeen, markSubmitted } = useLookFinderSession.getState();
   const [tutorialOpen, setTutorialOpen] = useState(!tutorialSeen);
+  // A fast double tap must open Results once; unlocked when this screen is shown again.
+  const submitting = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      submitting.current = false;
+    }, []),
+  );
 
   const answered = [answers.category, answers.occasion, answers.style, answers.change, answers.effort].filter(
     Boolean,
@@ -160,6 +167,8 @@ export default function LookFinderPreferences() {
           trailingIcon="arrowRight"
           disabled={!answers.category}
           onPress={() => {
+            if (submitting.current) return;
+            submitting.current = true;
             markSubmitted();
             router.push('/finder/results');
           }}

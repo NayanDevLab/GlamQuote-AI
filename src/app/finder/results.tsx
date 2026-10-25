@@ -237,7 +237,7 @@ export default function LookFinderResults() {
             </Text>
             <Text className="text-center font-sans text-body-m text-muted">{copy.detail}</Text>
           </View>
-          {copy.retry ? <Button label="Try Again" onPress={() => query.refetch()} /> : null}
+          {copy.retry ? <Button label="Try Again" onPress={() => query.refetch({ cancelRefetch: false })} /> : null}
           <Button label="Browse Styles Manually" variant="secondary" onPress={() => router.navigate('/explore')} />
 
           <View className="gap-3 rounded-lg border border-blush bg-card p-4">
