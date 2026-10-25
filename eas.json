@@ -7,6 +7,7 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
+      "node": "24.11.1",
       "developmentClient": false,
       "android": {
         "buildType": "apk"
@@ -14,6 +15,7 @@
     },
     "production": {
       "environment": "production",
+      "node": "24.11.1",
       "autoIncrement": true
     }
   },
