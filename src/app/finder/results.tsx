@@ -12,7 +12,7 @@ import { answerLabels, finderErrorKind, useLookFinderPicks, type FinderErrorKind
 import { ruleBasedPicks, TYPE_LABEL, type CatalogueStyle } from '@/features/look-finder/catalogue';
 import { StyleThumb } from '@/features/look-finder/components';
 import { openStyle } from '@/features/look-finder/open-style';
-import { submittedAnswers, useLookFinderSession } from '@/features/look-finder/session';
+import { useLookFinderSession } from '@/features/look-finder/session';
 import { colors, shadows } from '@/theme';
 
 const ERROR_COPY: Record<FinderErrorKind, { tag: string; detail: string; retry: boolean }> = {
@@ -102,8 +102,7 @@ function PickCard({
 // P2·4 loading → P2·5 Your Look Matches · P2·6 error / no match with a rule-based fallback.
 export default function LookFinderResults() {
   const insets = useSafeAreaInsets();
-  const draft = useLookFinderSession((state) => state.answers);
-  const answers = submittedAnswers(draft);
+  const answers = useLookFinderSession((state) => state.submitted);
   const query = useLookFinderPicks(answers);
   const { tryLook, opening, problem } = useTryLook();
 

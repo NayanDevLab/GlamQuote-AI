@@ -13,6 +13,11 @@ type LookFinderSession = {
   answers: Draft;
   /** True once the user has submitted answers at least once (shows "previous answers kept"). */
   hasSubmitted: boolean;
+  /**
+   * A copy of the answers taken when Find My Styles was tapped. Results read only this, so editing
+   * the draft never sends a request on its own.
+   */
+  submitted: LfAnswers | null;
 
   markTutorialSeen: () => void;
   setAnswer: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
@@ -28,11 +33,13 @@ export const useLookFinderSession = create<LookFinderSession>()(
       tutorialSeen: false,
       answers: EMPTY_ANSWERS,
       hasSubmitted: false,
+      submitted: null,
 
       markTutorialSeen: () => set({ tutorialSeen: true }),
       setAnswer: (key, value) => set((state) => ({ answers: { ...state.answers, [key]: value } })),
-      clearAnswers: () => set({ answers: EMPTY_ANSWERS, hasSubmitted: false }),
-      markSubmitted: () => set({ hasSubmitted: true }),
+      clearAnswers: () => set({ answers: EMPTY_ANSWERS, hasSubmitted: false, submitted: null }),
+      markSubmitted: () =>
+        set((state) => ({ hasSubmitted: true, submitted: submittedAnswers(state.answers) })),
     }),
     { name: 'gq.lookFinder', version: 1, storage: createJSONStorage(() => localStorage) },
   ),

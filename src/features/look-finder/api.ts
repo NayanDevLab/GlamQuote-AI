@@ -74,7 +74,10 @@ export function useLookFinderPicks(answers: LfAnswers | null) {
       return { picks, summary: response.summary, limitations: response.limitations };
     },
     enabled: Boolean(answers),
+    // One request per Find My Styles tap: no automatic retry or refetch, even after reconnecting.
     retry: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
     staleTime: Infinity,
     gcTime: 30 * 60_000,
   });

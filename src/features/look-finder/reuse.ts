@@ -8,8 +8,8 @@ import { useLookFinderSession } from './session';
  * empty rather than guessed. Returns null when nothing maps. No note is ever copied.
  */
 export function finderToAssistant(category: 'hair' | 'nails'): Preferences | null {
-  const { answers, hasSubmitted } = useLookFinderSession.getState();
-  if (!hasSubmitted || answers.category !== category) return null;
+  const answers = useLookFinderSession.getState().submitted;
+  if (!answers || answers.category !== category) return null;
   const matters: Matter[] = [];
   if (answers.style === 'natural') matters.push('natural');
   if (answers.style === 'bold') matters.push('bold');
