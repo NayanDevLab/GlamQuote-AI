@@ -55,7 +55,7 @@ export default function Home() {
             <Button
               label="Find My Look"
               icon="scanFace"
-              onPress={() => router.push('/pending/look-finder')}
+              onPress={() => router.push('/finder')}
             />
             <Button
               label="Explore Styles"

@@ -369,7 +369,8 @@ const MAINTENANCE =
 const UNKNOWN =
   /\b(not (documented|known|included|recorded|provided|listed|described|specified)|isn't (documented|known|recorded)|aren't (documented|known|recorded)|no (information|details|data)|unknown|can't (say|tell)|cannot (say|tell)|don't know|do not know)\b/i;
 
-function textProblem(text: unknown, allowedHex: Set<string>, maintenanceOk: boolean): string | null {
+/** Reason a piece of AI text must not be shown, or null. Shared by Look Finder. */
+export function textProblem(text: unknown, allowedHex: Set<string>, maintenanceOk: boolean): string | null {
   if (typeof text !== 'string') return 'not a string';
   const value = text.trim();
   if (!value) return 'empty text';

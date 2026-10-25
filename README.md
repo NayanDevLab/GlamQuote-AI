@@ -46,17 +46,19 @@ One-time setup for a Supabase project:
 3. Set `YOUCAM_API_KEY` and the three `CLOUDINARY_*` values in `.env`.
 4. `npx supabase login`
 5. `npx supabase secrets set YOUCAM_API_KEY=… CLOUDINARY_CLOUD_NAME=… CLOUDINARY_API_KEY=… CLOUDINARY_API_SECRET=… GEMINI_API_KEY=… GEMINI_MODEL=gemini-2.5-flash-lite --project-ref <ref>`
-6. `npx supabase functions deploy nail-transfer nail-vto hairstyle hair-color style-insight lookbook --project-ref <ref>`
+6. `npx supabase functions deploy nail-transfer nail-vto hairstyle hair-color style-insight look-finder lookbook --project-ref <ref>`
 
-The live project (`leerfkybeaxnghmdrbbw`) is set up: all seven migrations were applied on 2026-10-24 through the Supabase SQL API, not `supabase db push`. Before ever using `db push` against it, record them as applied first, or the CLI will try to run them again:
+The live project (`leerfkybeaxnghmdrbbw`) is set up: all eight migrations were applied (2026-10-24 and 2026-10-25) through the Supabase SQL API, not `supabase db push`. Before ever using `db push` against it, record them as applied first, or the CLI will try to run them again:
 
 ```bash
-npx supabase migration repair --status applied 20261012000000 20261012010000 20261012020000 20261024000000 20261024010000 20261025000000 20261025010000 --project-ref leerfkybeaxnghmdrbbw
+npx supabase migration repair --status applied 20261012000000 20261012010000 20261012020000 20261024000000 20261024010000 20261025000000 20261025010000 20261025020000 --project-ref leerfkybeaxnghmdrbbw
 ```
 
 Without Docker, deploy with `--use-api`. Only the provider keys are function secrets; set them by name rather than uploading all of `.env`.
 
 `supabase/functions/lookbook` handles Save to Lookbook: it copies a finished preview into private (`authenticated`) Cloudinary storage and lists saved looks. It never creates a YouCam task.
+
+`supabase/functions/look-finder` powers the AI Look Finder: it sends Gemini only the chosen category, the optional preference answers and the allowlisted style catalogue (`_shared/style-catalogue.ts`, shared with the app), and returns catalogue ids only. Its daily cap is `LOOK_FINDER_DAILY_LIMIT` (default 15). It never creates a YouCam task.
 
 Smoke test (each `run-*` creates exactly one task = 1 YouCam unit, and refuses to run without the flag):
 

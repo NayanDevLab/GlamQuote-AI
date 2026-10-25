@@ -42,7 +42,7 @@ function LookFinderBanner() {
         variant="inverse"
         icon="scanFace"
         className="mt-1.5"
-        onPress={() => router.push('/pending/look-finder')}
+        onPress={() => router.push('/finder')}
       />
       <View className="flex-row items-center justify-center gap-1.5">
         <Icon name="lock" size={14} color={colors.plumTint} strokeWidth={2} />

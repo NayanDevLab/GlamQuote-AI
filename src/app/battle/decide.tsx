@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -19,6 +19,7 @@ import { Icon } from '@/components/ui/icon';
 import { CHANGES, GEMINI_TERMS_URL, MATTERS, NOTE_MAX, NOTE_PII, OCCASIONS } from '@/features/assistant/api';
 import { AssistTutorial, PairCards, useAssistPair } from '@/features/assistant/components';
 import { useAssistantSession } from '@/features/assistant/session';
+import { finderToAssistant } from '@/features/look-finder/reuse';
 import { BattleHeader, goBack } from '@/features/battle/components';
 import { colors } from '@/theme';
 
@@ -45,6 +46,14 @@ export default function DecisionPreferences() {
   const shareNote = useAssistantSession((state) => state.shareNote);
   const { setPreferences, toggleMatter, setNote, setShareNote, markTutorialSeen } = useAssistantSession.getState();
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const prefilled = useAssistantSession((state) => state.prefilledFromFinder);
+  // Offer this guest's Look Finder answers as editable defaults (same category, empty answers only).
+  const pairCategory = pair?.[0].category;
+  useEffect(() => {
+    if (!pairCategory) return;
+    const mapped = finderToAssistant(pairCategory);
+    if (mapped) useAssistantSession.getState().prefillFromFinder(mapped);
+  }, [pairCategory]);
 
   const noteHasPii = NOTE_PII.test(note);
   const back = () => goBack(fromFavorite ? '/battle/favorite' : '/battle/compare');
@@ -101,6 +110,20 @@ export default function DecisionPreferences() {
             </Text>
           </View>
         )}
+
+        {prefilled ? (
+          <View className="flex-row items-center gap-2.5 rounded-lg bg-blush px-3.5 py-3">
+            <Text className="flex-1 font-sans text-body-s text-ink">
+              Prefilled from your <Text className="font-sans-semibold">Look Finder</Text> answers.
+            </Text>
+            <Text
+              accessibilityRole="button"
+              onPress={() => useAssistantSession.getState().dismissPrefill()}
+              className="py-1 pl-2 font-sans-semibold text-label-s text-plum">
+              Clear
+            </Text>
+          </View>
+        ) : null}
 
         <Question title="1. What’s the occasion?" hint="Optional">
           {OCCASIONS.map((item) => (

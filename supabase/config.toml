@@ -1,5 +1,5 @@
 # Minimal Supabase CLI config. Deploy with:
-#   npx supabase functions deploy nail-transfer nail-vto hairstyle hair-color style-insight lookbook --project-ref <your-project-ref>
+#   npx supabase functions deploy nail-transfer nail-vto hairstyle hair-color style-insight look-finder lookbook --project-ref <your-project-ref>
 project_id = "glamquote-ai"
 
 # The platform rejects requests without a valid user JWT before the handler runs;
@@ -17,6 +17,9 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.style-insight]
+verify_jwt = true
+
+[functions.look-finder]
 verify_jwt = true
 
 [functions.lookbook]

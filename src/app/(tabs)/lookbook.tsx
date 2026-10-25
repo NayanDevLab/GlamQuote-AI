@@ -134,7 +134,7 @@ export default function Lookbook() {
             label="Find My Look with AI"
             variant="secondary"
             icon="sparkle"
-            onPress={() => router.push('/pending/look-finder')}
+            onPress={() => router.push('/finder')}
           />
           <View className="mt-1">
             <InlineNote icon="lock" centered size="sm">
