@@ -1,5 +1,4 @@
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,7 +7,8 @@ import { FooterBar } from '@/components/ui/footer-bar';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
 import { Thumb } from '@/components/ui/thumb';
-import { DecisionAssistantSheet, goBack, LookImage, TypeChip } from '@/features/battle/components';
+import { goBack, LookImage, TypeChip } from '@/features/battle/components';
+import { useAssistantSession } from '@/features/assistant/session';
 import { useBattleSession } from '@/features/battle/battle-session';
 import { lookDetails, typeLabel } from '@/features/battle/looks';
 import { useSaveLooks } from '@/features/battle/save';
@@ -23,7 +23,6 @@ export default function FavoriteSelected() {
   const setNote = useBattleSession((state) => state.setNote);
   const { looks, isPending } = useBattleLooks();
   const save = useSaveLooks();
-  const [assistant, setAssistant] = useState(false);
 
   if (!decision) return <Redirect href="/battle" />;
   if (isPending) {
@@ -187,12 +186,14 @@ export default function FavoriteSelected() {
             icon="sparkle"
             variant="secondary"
             className="flex-1"
-            onPress={() => setAssistant(true)}
+            onPress={() => {
+              if (other) useAssistantSession.getState().setPair([favorite.key, other.key]);
+              router.push('/battle/decide?entry=favorite');
+            }}
           />
         </View>
       </FooterBar>
 
-      <DecisionAssistantSheet visible={assistant} onClose={() => setAssistant(false)} />
     </KeyboardAvoidingView>
   );
 }

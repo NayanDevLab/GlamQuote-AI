@@ -10,11 +10,12 @@ import {
   BattleHeader,
   BattleTutorial,
   CompareCard,
-  DecisionAssistantSheet,
   OriginalRow,
   studioFor,
   ZoomBoth,
 } from '@/features/battle/components';
+import { AssistTutorial } from '@/features/assistant/components';
+import { useAssistantSession } from '@/features/assistant/session';
 import { useBattleSession } from '@/features/battle/battle-session';
 import { canPair, comparisonRows, groupByPhoto } from '@/features/battle/looks';
 import { useSaveLooks } from '@/features/battle/save';
@@ -34,6 +35,7 @@ export default function CompareLooks() {
   const [favoriteKey, setFavoriteKey] = useState<string | null>(null);
   const [zoom, setZoom] = useState(false);
   const [assistant, setAssistant] = useState(false);
+  const assistantSeen = useAssistantSession((state) => state.tutorialSeen);
   const [tutorialOpen, setTutorialOpen] = useState(false);
 
   const byKey = new Map(looks.map((look) => [look.key, look]));
@@ -158,7 +160,11 @@ export default function CompareLooks() {
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => setAssistant(true)}
+          onPress={() => {
+            useAssistantSession.getState().setPair([a.key, b.key]);
+            if (assistantSeen) router.push('/battle/decide');
+            else setAssistant(true);
+          }}
           className="flex-row items-center gap-3 rounded-lg border border-blush bg-card p-3.5 active:bg-canvas">
           <View className="h-10 w-10 items-center justify-center rounded-full bg-blush">
             <Icon name="sparkle" size={18} color={colors.plum} />
@@ -166,7 +172,7 @@ export default function CompareLooks() {
           <View className="flex-1">
             <Text className="font-sans-semibold text-label text-ink">Help Me Decide</Text>
             <Text className="font-sans text-body-s text-muted">
-              Coming soon · it will use your answers and style details, not your photos
+              Optional · AI uses your answers and style details, not your photos
             </Text>
           </View>
           <Icon name="chevronRight" size={18} color={colors.ink} />
@@ -246,7 +252,14 @@ export default function CompareLooks() {
       </FooterBar>
 
       <ZoomBoth visible={zoom} onClose={() => setZoom(false)} looks={[a, b]} />
-      <DecisionAssistantSheet visible={assistant} onClose={() => setAssistant(false)} />
+      <AssistTutorial
+        visible={assistant}
+        onClose={() => {
+          useAssistantSession.getState().markTutorialSeen();
+          setAssistant(false);
+        }}
+        onStart={() => router.push('/battle/decide')}
+      />
       <BattleTutorial visible={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </View>
   );

@@ -277,30 +277,6 @@ export function ZoomBoth({
   );
 }
 
-/** Honest placeholder for Phase 5B: no AI advice exists yet, and nothing is sent anywhere. */
-export function DecisionAssistantSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  return (
-    <Sheet
-      visible={visible}
-      onClose={onClose}
-      eyebrow="Help Me Decide"
-      title={
-        <>
-          Coming <Text className="font-serif-italic text-plum">Soon</Text>
-        </>
-      }>
-      <Text className="font-sans text-body-m text-muted">
-        The Decision Assistant isn’t available yet. When it arrives, it will use only the style details of these two
-        looks and the preferences you choose to share — never your photos or previews.
-      </Text>
-      <Text className="font-sans text-body-m text-muted">
-        Your two looks stay selected. You can still pick a favorite yourself.
-      </Text>
-      <Button label="Back to My Looks" onPress={onClose} />
-    </Sheet>
-  );
-}
-
 /** The studio to make another look for a category (the same photo stays selected there). */
 export function studioFor(look: BattleLook): '/nail' | '/hair/styles' | '/hair/color' {
   if (look.category === 'nails') return '/nail';
