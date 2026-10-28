@@ -1,15 +1,16 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { hairStudioImages } from '@/assets/images';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
-import { PhotoSlot } from '@/components/ui/photo-slot';
 import { Sheet } from '@/components/ui/sheet';
 import { Thumb } from '@/components/ui/thumb';
-import { ColorModel, CurlsModel, HairSwatch } from '@/features/hair-color/components';
+import { HairSwatch } from '@/features/hair-color/components';
 import { useHairColorSession } from '@/features/hair-color/hair-color-session';
 import type { HairColorMode } from '@/features/hair-color/presets';
 import { colors, shadows } from '@/theme';
@@ -89,16 +90,13 @@ export default function HairColorStudio() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         contentContainerClassName="gap-4 px-5 pt-2"
         showsVerticalScrollIndicator={false}>
-        <PhotoSlot tone="warm" className="h-[210px] overflow-hidden rounded-lg" style={shadows.card}>
-          <View aria-hidden className="absolute inset-0">
-            <View className="absolute right-[-50px] top-[-60px] h-[250px] w-[200px] rounded-full border border-champagne opacity-60" />
-            <View className="absolute bottom-[-30px] left-2">
-              <CurlsModel color="#A8482A" width={180} height={225} />
-            </View>
-            <View className="absolute bottom-[-40px] right-1">
-              <ColorModel swatch={['#C98A80', '#E8B89A']} width={176} height={220} split={0.6} softness={0.3} />
-            </View>
-          </View>
+        <View className="relative h-[210px] overflow-hidden rounded-lg" style={shadows.card}>
+          <Image
+            source={hairStudioImages.colorHero}
+            contentFit="cover"
+            accessibilityLabel="Two models showcasing vibrant Copper Red curls and a Rose Gold to Peach Blonde ombre in studio light"
+            style={StyleSheet.absoluteFill}
+          />
           <View className="absolute left-3 top-3 flex-row items-center gap-1.5 rounded-full bg-canvas/95 px-2.5 py-[5px]">
             <HairSwatch swatch={['#A8482A', '#E8B89A']} width={13} height={13} radius={7} />
             <Text className="font-sans-semibold text-caption text-plum">Hair color try-on from your photo</Text>
@@ -111,7 +109,7 @@ export default function HairColorStudio() {
               <Text className="font-sans-semibold text-caption text-ink">Ombre · Rose Gold → Peach</Text>
             </View>
           </View>
-        </PhotoSlot>
+        </View>
 
         <View className="gap-2">
           <Text accessibilityRole="header" className="font-serif text-hero text-ink">

@@ -1,13 +1,14 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { nailStudioImages } from '@/assets/images';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
 import { ModeCard } from '@/components/ui/mode-card';
-import { PhotoSlot } from '@/components/ui/photo-slot';
 import { Sheet } from '@/components/ui/sheet';
 import { useNailSession } from '@/features/nail/nail-session';
 import { colors, shadows } from '@/theme';
@@ -47,12 +48,18 @@ export default function NailStudio() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         contentContainerClassName="gap-4 px-5 pt-2"
         showsVerticalScrollIndicator={false}>
-        <PhotoSlot tone="warm" className="h-[190px] rounded-lg" style={shadows.card}>
+        <View className="relative h-[190px] overflow-hidden rounded-lg" style={shadows.card}>
+          <Image
+            source={nailStudioImages.hero}
+            contentFit="cover"
+            accessibilityLabel="Close-up of a relaxed hand with glossy champagne-chrome almond nails in soft window light"
+            style={StyleSheet.absoluteFill}
+          />
           <View className="absolute left-3 top-3 flex-row items-center gap-1.5 rounded-full bg-canvas/95 px-2.5 py-[5px]">
             <Icon name="image" size={13} color={colors.plum} strokeWidth={2} />
             <Text className="font-sans-semibold text-caption text-plum">AI try-on from your photo</Text>
           </View>
-        </PhotoSlot>
+        </View>
 
         <View className="gap-2">
           <Text accessibilityRole="header" className="font-serif text-hero text-ink">

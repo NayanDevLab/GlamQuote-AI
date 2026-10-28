@@ -1,9 +1,11 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Ellipse } from 'react-native-svg';
 
+import { exploreImages } from '@/assets/images';
 import { Button } from '@/components/ui/button';
 import { ComingSoonTile, StudioCard } from '@/components/ui/cards';
 import { Chip } from '@/components/ui/chip';
@@ -57,10 +59,22 @@ function LookFinderBanner() {
 function StyleTile({ style }: { style: SampleStyle }) {
   return (
     <View className="flex-1 gap-2.5">
-      <PhotoSlot
-        tone={style.category === 'hair' ? 'cool' : 'warm'}
-        className="aspect-[4/5] rounded-md"
-      />
+      {style.image ? (
+        <View className="aspect-[4/5] overflow-hidden rounded-md bg-blush">
+          <Image
+            source={style.image}
+            contentFit="cover"
+            transition={150}
+            style={StyleSheet.absoluteFill}
+            accessibilityLabel={`${style.name} - ${style.description}`}
+          />
+        </View>
+      ) : (
+        <PhotoSlot
+          tone={style.category === 'hair' ? 'cool' : 'warm'}
+          className="aspect-[4/5] rounded-md"
+        />
+      )}
       <View className="gap-[3px] px-0.5">
         <Text className="font-sans-semibold text-caption uppercase tracking-[1.3px] text-muted">
           {style.category === 'hair' ? 'Hair' : 'Nails'}
@@ -142,12 +156,14 @@ export default function Explore() {
               title="Hair Studio"
               description="Cuts, colours & textures"
               tone="cool"
+              image={exploreImages.hairStudio}
               onPress={() => router.push('/hair')}
             />
             <StudioCard
               title="Nail Studio"
               description="Shapes, shades & art"
               tone="warm"
+              image={exploreImages.nailStudio}
               onPress={() => router.push('/nail')}
             />
           </View>

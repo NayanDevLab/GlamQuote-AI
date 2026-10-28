@@ -1,4 +1,4 @@
-import { Image } from 'expo-image';
+import { Image, type ImageSource } from 'expo-image';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -21,7 +21,7 @@ function Figure({
   onAction,
 }: {
   label: string;
-  uri: string;
+  uri: string | ImageSource;
   caption?: string;
   action: string;
   onAction: () => void;
@@ -30,7 +30,7 @@ function Figure({
     <View className="flex-1 gap-2">
       <View className="overflow-hidden rounded-lg bg-blush">
         <Image
-          source={{ uri }}
+          source={typeof uri === 'string' ? { uri } : uri}
           contentFit="cover"
           accessibilityLabel={caption ? `${label}: ${caption}` : label}
           style={{ width: '100%', aspectRatio: 4 / 5 }}

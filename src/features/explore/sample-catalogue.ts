@@ -5,6 +5,10 @@
  * They are not provider-verified styles and must not start a YouCam task. The real
  * catalogue (current provider template IDs and validated references) replaces this file.
  */
+import type { ImageSource } from 'expo-image';
+
+import { exploreImages } from '@/assets/images';
+
 export type StyleCategory = 'hair' | 'nails';
 
 export type SampleStyle = {
@@ -13,6 +17,7 @@ export type SampleStyle = {
   name: string;
   description: string;
   tags: string[];
+  image?: ImageSource;
 };
 
 export const SAMPLE_STYLES: SampleStyle[] = [
@@ -22,6 +27,7 @@ export const SAMPLE_STYLES: SampleStyle[] = [
     name: 'Soft Twist-Out',
     description: 'Defined natural texture, easy for days',
     tags: ['Medium', 'Curly & coily', 'Low maintenance', 'Everyday'],
+    image: exploreImages.styleE1,
   },
   {
     id: 'E2',
@@ -29,6 +35,7 @@ export const SAMPLE_STYLES: SampleStyle[] = [
     name: 'Milky Nude Square',
     description: 'Quietly polished for office days',
     tags: ['Short', 'Square', 'Neutral', 'Low maintenance', 'Everyday'],
+    image: exploreImages.styleE2,
   },
   {
     id: 'E3',
@@ -36,6 +43,7 @@ export const SAMPLE_STYLES: SampleStyle[] = [
     name: 'Textured Crop',
     description: 'Short and sharp, quick to style',
     tags: ['Short', 'Low maintenance', 'Everyday'],
+    image: exploreImages.styleE3,
   },
   {
     id: 'E4',
@@ -43,6 +51,7 @@ export const SAMPLE_STYLES: SampleStyle[] = [
     name: 'Plum Chrome Almond',
     description: 'A glossy statement for events',
     tags: ['Almond', 'Nail art', 'Event', 'Bold'],
+    image: exploreImages.styleE4,
   },
   {
     id: 'E5',
@@ -50,6 +59,7 @@ export const SAMPLE_STYLES: SampleStyle[] = [
     name: 'Curtain-Fringe Shag',
     description: 'Something new with movement',
     tags: ['Medium', 'Bold', 'Event'],
+    image: exploreImages.styleE5,
   },
   {
     id: 'E6',
@@ -57,6 +67,7 @@ export const SAMPLE_STYLES: SampleStyle[] = [
     name: 'Matte Neutral Short',
     description: 'Clean, minimal and low-fuss',
     tags: ['Short', 'Neutral', 'Low maintenance', 'Everyday'],
+    image: exploreImages.styleE6,
   },
 ];
 

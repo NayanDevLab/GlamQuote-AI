@@ -59,7 +59,7 @@ export function StyleThumb({ style, size = 96 }: { style: CatalogueStyle; size?:
       className="items-center justify-center overflow-hidden rounded-[16px] bg-blush">
       {thumb ? (
         <Image
-          source={{ uri: thumb }}
+          source={typeof thumb === 'string' ? { uri: thumb } : thumb}
           contentFit="cover"
           cachePolicy="disk"
           style={{ width: '100%', height: '100%' }}

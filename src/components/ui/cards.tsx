@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { Image, type ImageSource } from 'expo-image';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, shadows } from '@/theme';
 
@@ -9,11 +10,12 @@ type StudioCardProps = {
   title: string;
   description: string;
   tone: 'warm' | 'cool';
+  image?: ImageSource;
   onPress: () => void;
 };
 
 /** Studio entry card: 1:1 image, serif title, one-line promise. The whole card is one pressable. */
-export function StudioCard({ title, description, tone, onPress }: StudioCardProps) {
+export function StudioCard({ title, description, tone, image, onPress }: StudioCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -22,11 +24,26 @@ export function StudioCard({ title, description, tone, onPress }: StudioCardProp
       onPress={onPress}
       style={shadows.card}
       className="flex-1 rounded-lg border border-blush bg-card p-2 active:bg-canvas">
-      <PhotoSlot tone={tone} className="aspect-square rounded-md">
-        <View className="absolute left-2 top-2 rounded-full bg-canvas/95 px-2.5 py-[5px]">
-          <Text className="font-sans-semibold text-caption text-plum">AI try-on</Text>
+      {image ? (
+        <View className="aspect-square overflow-hidden rounded-md bg-blush">
+          <Image
+            source={image}
+            contentFit="cover"
+            transition={150}
+            style={StyleSheet.absoluteFill}
+            accessibilityLabel={`${title} preview`}
+          />
+          <View className="absolute left-2 top-2 rounded-full bg-canvas/95 px-2.5 py-[5px]">
+            <Text className="font-sans-semibold text-caption text-plum">AI try-on</Text>
+          </View>
         </View>
-      </PhotoSlot>
+      ) : (
+        <PhotoSlot tone={tone} className="aspect-square rounded-md">
+          <View className="absolute left-2 top-2 rounded-full bg-canvas/95 px-2.5 py-[5px]">
+            <Text className="font-sans-semibold text-caption text-plum">AI try-on</Text>
+          </View>
+        </PhotoSlot>
+      )}
       <View className="gap-1 px-2 pb-2 pt-3">
         <Text className="font-serif text-title text-ink">{title}</Text>
         <Text className="font-sans text-body-s text-muted">{description}</Text>

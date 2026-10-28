@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { homeImages } from '@/assets/images';
 import { LookbookTeaser } from '@/components/illustrations';
 import { Monogram, Wordmark } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
@@ -76,12 +77,14 @@ export default function Home() {
               title="Nail Studio"
               description="Try nail designs on your own hands."
               tone="warm"
+              image={homeImages.nailStudio}
               onPress={() => router.push('/nail')}
             />
             <StudioCard
               title="Hair Studio"
               description="Preview hairstyles on your own photo."
               tone="cool"
+              image={homeImages.hairStudio}
               onPress={() => router.push('/hair')}
             />
           </View>

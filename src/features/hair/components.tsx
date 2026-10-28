@@ -13,9 +13,10 @@ export const HAIR_STEPS = ['Photo', 'Style', 'Review'] as const;
 
 /** YouCam's sample image of a hairstyle. A style reference only — never the user's result. */
 export function TemplateImage({ template, size }: { template: HairTemplate; size?: number }) {
+  const source = typeof template.thumb === 'string' ? { uri: template.thumb } : template.thumb;
   return (
     <Image
-      source={{ uri: template.thumb }}
+      source={source}
       contentFit="cover"
       cachePolicy="disk"
       accessibilityLabel={`${template.title} hairstyle sample`}
