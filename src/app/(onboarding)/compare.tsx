@@ -1,12 +1,20 @@
-import { Text, View } from 'react-native';
+import { Image, type ImageSource } from 'expo-image';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { PhotoSlot } from '@/components/ui/photo-slot';
+import { onboardingImages } from '@/assets/images';
 import { OnboardingStep } from '@/features/onboarding/onboarding-step';
 
-function LookCard({ label, style, mirrored = false }: { label: string; style: string; mirrored?: boolean }) {
+function LookCard({ label, style, image }: { label: string; style: string; image: ImageSource }) {
   return (
     <View className="flex-1 rounded-[22px] border border-blush bg-card p-1.5">
-      <PhotoSlot tone="cool" focusX={mirrored ? 0.7 : 0.3} className="h-[184px] rounded-[16px]" />
+      <View className="relative h-[184px] overflow-hidden rounded-[16px] bg-blush">
+        <Image
+          source={image}
+          contentFit="cover"
+          accessibilityLabel={`${label}: ${style}`}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
       <View className="gap-px px-1.5 pb-1.5 pt-2.5">
         <Text className="font-sans-semibold text-label-s text-ink">{label}</Text>
         <Text className="font-sans text-body-s text-muted">{style}</Text>
@@ -28,8 +36,8 @@ export default function OnboardingCompare() {
       body="Compare your favorite looks, get helpful insights, and save the one you love."
       art={
         <View className="flex-row gap-3.5">
-          <LookCard label="Look A" style="Sleek long layers" />
-          <LookCard label="Look B" style="Curly chin-length bob" mirrored />
+          <LookCard label="Look A" style="Sleek long layers" image={onboardingImages.compare.c1LookA} />
+          <LookCard label="Look B" style="Curly chin-length bob" image={onboardingImages.compare.c2LookB} />
           <View className="absolute left-1/2 top-[76px] -ml-[28px] rounded-full bg-champagne p-px">
             <View className="rounded-full bg-canvas p-1">
               <View className="h-[46px] w-[46px] items-center justify-center rounded-full bg-plum">

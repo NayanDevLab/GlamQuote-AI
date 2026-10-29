@@ -1,11 +1,12 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { onboardingImages } from '@/assets/images';
 import { Monogram, Wordmark } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
-import { PhotoSlot } from '@/components/ui/photo-slot';
 import { Sheet } from '@/components/ui/sheet';
 import { HOW_IT_WORKS_ICONS, StepList, type Step } from '@/components/ui/step-list';
 import { InlineNote } from '@/components/ui/typography';
@@ -60,12 +61,16 @@ export default function Welcome() {
           style={ARCH}
           className="absolute left-3 top-3 h-[288px] w-[248px] border border-champagne"
         />
-        <PhotoSlot
-          tone="cool"
-          focusX={0.4}
+        <View
           style={{ ...ARCH, boxShadow: '0 18px 34px -24px rgba(41, 36, 42, 0.6)' }}
-          className="h-[288px] w-[248px]"
-        />
+          className="relative h-[288px] w-[248px] overflow-hidden bg-blush">
+          <Image
+            source={onboardingImages.welcome}
+            contentFit="cover"
+            accessibilityLabel="Two adults side by side with natural hair textures in warm soft studio lighting"
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
       </View>
 
       <View className="items-center gap-3 pt-7">

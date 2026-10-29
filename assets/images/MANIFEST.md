@@ -1,6 +1,6 @@
-# GlamQuote AI — Image Asset Manifest (Phase 1: Home & Explore, Phase 2: Nail Studio, Phase 3: Hair Studio & Hair Color)
+# GlamQuote AI — Image Asset Manifest (Phase 1: Home & Explore, Phase 2: Nail Studio, Phase 3: Hair Studio & Hair Color, Phase 4: Onboarding & Guest Welcome)
 
-This manifest records the photographic assets introduced in Phase 1 (Home & Explore), Phase 2 (Nail Studio), and Phase 3 (Hair Studio & Hair Color) to replace temporary placeholders with high-fidelity, editorial beauty photography matching GlamQuote AI's design aesthetics, Claude design exports, and PRD guidelines.
+This manifest records the photographic assets introduced in Phase 1 (Home & Explore), Phase 2 (Nail Studio), Phase 3 (Hair Studio & Hair Color), and Phase 4 (Onboarding & Guest Welcome) to replace temporary placeholders with high-fidelity, editorial beauty photography matching GlamQuote AI's design aesthetics, Claude design exports, and PRD guidelines.
 
 ## Visual Aesthetic Guidelines
 - **Palette:** Warm ivory (#FAF7F3), cream/linen, soft champagne, muted blush, and deep plum (#70465B).
@@ -80,6 +80,17 @@ This manifest records the photographic assets introduced in Phase 1 (Home & Expl
 | `rose-gold.jpg` | 1:1 | 1024 × 1024 | Hair Color Preset (`Rose Gold`) | Delicate metallic blush pink and warm golden peach rose gold hair color with luminous silky finish on warm champagne linen. Matches `FULL_PRESETS`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
 | `ombre-caramel.jpg` | 1:1 | 1024 × 1024 | Hair Color Preset (`Dark Brown → Caramel`) | Seamless realistic ombre transition from deep dark brown roots at the crown fading into warm glowing caramel blonde ends on long soft waves. Matches `OMBRE_PRESETS`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
 | `ombre-rose-gold-peach.jpg` | 1:1 | 1024 × 1024 | Hair Color Preset (`Rose Gold → Peach Blonde`) | Subtle, elegant ombre gradient from soft rose gold roots down to light pastel peach blonde ends on flowing healthy waves. Matches `OMBRE_PRESETS`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
+
+### 5. Onboarding & Guest Welcome Assets (`assets/images/onboarding/`)
+
+| File | Aspect Ratio | Dimensions | Design Slot / Role | Description & Visual Details | License / Origin |
+|---|---|---|---|---|---|
+| `welcome-hero.jpg` | 3:4 (covers 6:7) | 896 × 1152 | Guest Welcome Arch (`src/app/welcome.tsx`, W1) | Editorial beauty portrait of two stylish adults side by side (woman with defined curls and man with clean short fade) framed by a classical Roman arch in warm studio lighting on linen. Matches `Welcome.tsx`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
+| `discover-d1-man-twists.jpg` | 2:3 | 896 × 1344 | Onboarding Discover (`src/app/(onboarding)/discover.tsx`, D1) | Editorial portrait of a Black adult man in his 30s with short defined coily twists, crisp hairline, confident expression in warm daylight on beige linen. Matches `Onboarding-Discover.tsx`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
+| `discover-d3-silver-waves.jpg` | 4:3 | 1152 × 864 | Onboarding Discover (`src/app/(onboarding)/discover.tsx`, D3) | Editorial portrait of an elegant woman in her 50s with natural fair skin and graceful silver chin-length wavy hair in soft natural light. Matches `Onboarding-Discover.tsx`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
+| `try-on-t1-original.jpg` | 3:4 | 896 × 1152 | Onboarding Try On ("Your photo", T1) | Editorial portrait of an adult model with androgynous style, light-brown skin, and natural straight shoulder-length dark hair in soft window light. Matches `Onboarding-TryOn.tsx`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
+| `compare-c1-look-a.jpg` | 3:4 | 896 × 1152 | Onboarding Compare ("Look A", C1) | Editorial beauty portrait of a woman in her 40s with olive skin and polished, sleek long layered brunette hair past the shoulders in soft daylight. Matches `Onboarding-Compare.tsx`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
+| `compare-c2-look-b.jpg` | 3:4 | 896 × 1152 | Onboarding Compare ("Look B", C2) | Matching portrait of the same woman in her 40s with identical pose and lighting, showcasing a chic, curly chin-length bob with bouncy ringlets. Matches `Onboarding-Compare.tsx`. | AI Beauty Editorial (Generated for GlamQuote AI; commercial royalty-free project asset) |
 
 ---
 

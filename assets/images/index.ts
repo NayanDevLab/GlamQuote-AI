@@ -61,3 +61,24 @@ export const hairStudioImages = {
     ombreRoseGoldPeach: require('./hair-studio/hair-colors/ombre-rose-gold-peach.jpg') as ImageSource,
   },
 };
+
+/**
+ * Editorial photography assets for Onboarding and Guest Welcome screens.
+ * Sourced/generated for GlamQuote AI Phase 4.
+ */
+export const onboardingImages = {
+  welcome: require('./onboarding/welcome-hero.jpg') as ImageSource,
+  discover: {
+    d1ManTwists: require('./onboarding/discover-d1-man-twists.jpg') as ImageSource,
+    d2MilkyNude: require('./nail-studio/curated-milky-nude.jpg') as ImageSource,
+    d3SilverWaves: require('./onboarding/discover-d3-silver-waves.jpg') as ImageSource,
+  },
+  tryOn: {
+    t1Original: require('./onboarding/try-on-t1-original.jpg') as ImageSource,
+    t2Preview: require('./explore/style-e5-curtain-fringe-shag.jpg') as ImageSource,
+  },
+  compare: {
+    c1LookA: require('./onboarding/compare-c1-look-a.jpg') as ImageSource,
+    c2LookB: require('./onboarding/compare-c2-look-b.jpg') as ImageSource,
+  },
+};
