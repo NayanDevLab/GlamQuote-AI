@@ -11,7 +11,7 @@ function LookCard({ label, style, image }: { label: string; style: string; image
         <Image
           source={image}
           contentFit="cover"
-          accessibilityLabel={`${label}: ${style}`}
+          accessibilityLabel={`Illustrative sample: ${label}: ${style}`}
           style={StyleSheet.absoluteFill}
         />
       </View>
@@ -34,6 +34,7 @@ export default function OnboardingCompare() {
         </>
       }
       body="Compare your favorite looks, get helpful insights, and save the one you love."
+      note="Sample comparison — illustrative example on sample model."
       art={
         <View className="flex-row gap-3.5">
           <LookCard label="Look A" style="Sleek long layers" image={onboardingImages.compare.c1LookA} />

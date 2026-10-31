@@ -75,7 +75,7 @@ export const onboardingImages = {
   },
   tryOn: {
     t1Original: require('./onboarding/try-on-t1-original.jpg') as ImageSource,
-    t2Preview: require('./explore/style-e5-curtain-fringe-shag.jpg') as ImageSource,
+    t2Preview: require('./onboarding/try-on-t2-preview.jpg') as ImageSource,
   },
   compare: {
     c1LookA: require('./onboarding/compare-c1-look-a.jpg') as ImageSource,

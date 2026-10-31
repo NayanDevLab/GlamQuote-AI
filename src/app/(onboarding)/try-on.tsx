@@ -17,7 +17,7 @@ export default function OnboardingTryOn() {
         </>
       }
       body="Preview nail designs and hairstyles on your own photos before making a change."
-      note="AI previews are illustrative. Actual results may vary."
+      note="Sample preview — illustrative example on sample model. Actual results may vary."
       next="/compare"
       art={
         <View
@@ -27,7 +27,7 @@ export default function OnboardingTryOn() {
             <Image
               source={onboardingImages.tryOn.t1Original}
               contentFit="cover"
-              accessibilityLabel="Your photo with straight shoulder-length hair"
+              accessibilityLabel="Illustrative sample: original photo with straight shoulder-length hair"
               style={StyleSheet.absoluteFill}
             />
             <View className="absolute left-2.5 top-2.5 rounded-full bg-canvas/95 px-2.5 py-[5px]">
@@ -38,7 +38,7 @@ export default function OnboardingTryOn() {
             <Image
               source={onboardingImages.tryOn.t2Preview}
               contentFit="cover"
-              accessibilityLabel="AI preview with textured shag haircut and curtain fringe"
+              accessibilityLabel="Illustrative sample: AI preview with textured shag haircut and curtain fringe on the same model"
               style={StyleSheet.absoluteFill}
             />
             <View className="absolute right-2.5 top-2.5 rounded-full bg-plum px-2.5 py-[5px]">
