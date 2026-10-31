@@ -29,9 +29,16 @@ export function OnboardingStep({ step, overline, title, body, note, art, next }:
   const completeOnboarding = useAppStore((state) => state.completeOnboarding);
 
   // Skip (any step) and Get Started both mark onboarding done and replace the stack with Welcome.
+  // A replay from Settings or Help returns to that screen instead.
   const finish = () => {
     completeOnboarding();
-    router.replace('/welcome');
+    const replayReturn = useAppStore.getState().onboardingReplayReturn;
+    if (replayReturn) {
+      useAppStore.getState().endOnboardingReplay();
+      router.dismissTo(replayReturn);
+    } else {
+      router.replace('/welcome');
+    }
   };
 
   const dots = (

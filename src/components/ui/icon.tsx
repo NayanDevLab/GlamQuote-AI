@@ -123,6 +123,26 @@ const ICONS = {
     </>
   ),
   trash: <Path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" />,
+  // From the Settings / Help design (P7A).
+  replay: <Path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4" />,
+  shield: (
+    <>
+      <Path d="M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6z" />
+      <Path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  globe: (
+    <>
+      <Circle cx={12} cy={12} r={9} />
+      <Path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18" />
+    </>
+  ),
+  document: (
+    <>
+      <Path d="M7 3h7l5 5v13H7z" />
+      <Path d="M14 3v5h5M10 13h6M10 17h6" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof ICONS;

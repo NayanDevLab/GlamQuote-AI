@@ -1,6 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,7 +9,7 @@ import { IndeterminateBar, StatusRow } from '@/components/ui/progress';
 import { answerLabels, finderErrorKind, useLookFinderPicks, type FinderErrorKind } from '@/features/look-finder/api';
 import { ruleBasedPicks, TYPE_LABEL, type CatalogueStyle } from '@/features/look-finder/catalogue';
 import { StyleThumb } from '@/features/look-finder/components';
-import { openStyle } from '@/features/look-finder/open-style';
+import { useTryLook } from '@/features/look-finder/open-style';
 import { useLookFinderSession } from '@/features/look-finder/session';
 import { colors, shadows } from '@/theme';
 
@@ -37,25 +35,6 @@ const ERROR_COPY: Record<FinderErrorKind, { tag: string; detail: string; retry: 
     retry: false,
   },
 };
-
-function useTryLook() {
-  const queryClient = useQueryClient();
-  const [opening, setOpening] = useState<string | null>(null);
-  const [problem, setProblem] = useState<string | null>(null);
-  const tryLook = async (style: CatalogueStyle) => {
-    if (opening) return;
-    setOpening(style.id);
-    setProblem(null);
-    try {
-      await openStyle(style, queryClient);
-    } catch (error) {
-      setProblem(error instanceof Error ? error.message : 'This style couldn’t be opened right now.');
-    } finally {
-      setOpening(null);
-    }
-  };
-  return { tryLook, opening, problem };
-}
 
 function PickCard({
   index,

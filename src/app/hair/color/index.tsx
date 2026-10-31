@@ -5,22 +5,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { hairStudioImages } from '@/assets/images';
-import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
-import { Sheet } from '@/components/ui/sheet';
 import { Thumb } from '@/components/ui/thumb';
 import { HairSwatch } from '@/features/hair-color/components';
 import { useHairColorSession } from '@/features/hair-color/hair-color-session';
 import type { HairColorMode } from '@/features/hair-color/presets';
 import { photoExists } from '@/lib/photo';
 import { colors, shadows } from '@/theme';
-
-const TUTORIAL_STEPS = [
-  'Add a clear photo of your hair.',
-  'Choose a full color or ombre style.',
-  'Generate your YouCam preview, compare and save.',
-];
+import { HairColorTutorial } from '@/features/tutorials/sheets';
 
 const STRIP = [
   { label: 'Choose', detail: 'A full shade or an ombre' },
@@ -243,46 +236,7 @@ export default function HairColorStudio() {
         </Text>
       </ScrollView>
 
-      <Sheet
-        visible={tutorialOpen}
-        onClose={closeTutorial}
-        eyebrow="Hair Color · First time"
-        title={
-          <>
-            How Hair Color <Text className="font-serif-italic text-plum">Works</Text>
-          </>
-        }>
-        <View className="gap-3 rounded-[22px] border border-blush bg-card p-3">
-          {TUTORIAL_STEPS.map((step, index) => (
-            <View key={step} className="flex-row items-center gap-3">
-              <View
-                className={`h-8 w-8 items-center justify-center rounded-full ${index === 0 ? 'bg-plum' : 'bg-blush'}`}>
-                <Text
-                  className={`font-serif-italic text-[18px] leading-[22px] ${index === 0 ? 'text-white' : 'text-plum'}`}>
-                  {index + 1}
-                </Text>
-              </View>
-              <Text className="flex-1 font-sans text-body-m text-ink">{step}</Text>
-            </View>
-          ))}
-        </View>
-        <Text className="font-sans text-caption text-muted">
-          Swatches are samples until you generate. Replay this anytime from the ? at the top.
-        </Text>
-        <Button
-          label="Let’s Try It"
-          onPress={() => {
-            closeTutorial();
-            open(mode);
-          }}
-        />
-        <Text
-          accessibilityRole="button"
-          onPress={closeTutorial}
-          className="self-center px-4 py-2 font-sans-semibold text-label text-plum">
-          Skip Tutorial
-        </Text>
-      </Sheet>
+      <HairColorTutorial visible={tutorialOpen} onClose={closeTutorial} onStart={() => open(mode)} />
     </View>
   );
 }

@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Ellipse } from 'react-native-svg';
 
@@ -58,7 +58,11 @@ function LookFinderBanner() {
 
 function StyleTile({ style }: { style: SampleStyle }) {
   return (
-    <View className="flex-1 gap-2.5">
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${style.name}, ${style.category === 'hair' ? 'Hair' : 'Nails'}. ${style.description}. Open style details`}
+      onPress={() => router.push({ pathname: '/style/[id]', params: { id: style.id } })}
+      className="flex-1 gap-2.5 active:opacity-80">
       {style.image ? (
         <View className="aspect-[4/5] overflow-hidden rounded-md bg-blush">
           <Image
@@ -82,7 +86,7 @@ function StyleTile({ style }: { style: SampleStyle }) {
         <Text className="font-serif text-step text-ink">{style.name}</Text>
         <Text className="font-sans text-body-s text-muted">{style.description}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

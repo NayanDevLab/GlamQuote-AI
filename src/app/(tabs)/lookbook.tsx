@@ -8,16 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LookbookStack } from '@/components/illustrations';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
-import { Sheet } from '@/components/ui/sheet';
 import { InlineNote } from '@/components/ui/typography';
 import { LOOKBOOK_QUERY_KEY, listSavedLooks, lookArea, type SavedLook } from '@/features/lookbook/lookbook-api';
 import { colors, shadows } from '@/theme';
-
-const TUTORIAL_STEPS = [
-  'Save your favorite YouCam-generated previews.',
-  'Revisit and compare your looks.',
-  'Choose a final look and create a shareable card.',
-];
+import { LookbookTutorial } from '@/features/tutorials/sheets';
 
 function LookCard({ look }: { look: SavedLook }) {
   return (
@@ -144,38 +138,7 @@ export default function Lookbook() {
         </ScrollView>
       )}
 
-      <Sheet
-        visible={tutorialOpen}
-        onClose={() => setTutorialOpen(false)}
-        eyebrow="Lookbook"
-        title={
-          <>
-            Your Personal <Text className="font-serif-italic text-plum">Style Collection</Text>
-          </>
-        }>
-        <View className="gap-3 rounded-[22px] border border-blush bg-card p-3">
-          {TUTORIAL_STEPS.map((step, index) => (
-            <View key={step} className="flex-row items-center gap-3">
-              <View
-                className={`h-8 w-8 items-center justify-center rounded-full ${
-                  index === 0 ? 'bg-plum' : 'bg-blush'
-                }`}>
-                <Text
-                  className={`font-serif-italic text-[18px] leading-[22px] ${
-                    index === 0 ? 'text-white' : 'text-plum'
-                  }`}>
-                  {index + 1}
-                </Text>
-              </View>
-              <Text className="flex-1 font-sans text-body-m text-ink">{step}</Text>
-            </View>
-          ))}
-        </View>
-        <InlineNote icon="lock" size="sm">
-          Your saved looks are private to you. Nothing is shared unless you choose to share it.
-        </InlineNote>
-        <Button label="Got It" onPress={() => setTutorialOpen(false)} />
-      </Sheet>
+      <LookbookTutorial visible={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </View>
   );
 }

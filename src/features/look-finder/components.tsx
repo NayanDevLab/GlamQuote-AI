@@ -87,7 +87,16 @@ const TUTORIAL_STEPS = [
 ];
 
 /** P2·2 — Look Finder tutorial (first visit; ? replays it). */
-export function FinderTutorial({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export function FinderTutorial({
+  visible,
+  onClose,
+  onStart,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  /** Replayed from Help: opens Look Finder. */
+  onStart?: () => void;
+}) {
   return (
     <Sheet
       visible={visible}
@@ -124,7 +133,13 @@ export function FinderTutorial({ visible, onClose }: { visible: boolean; onClose
           Gemini gets your answers and GlamQuote’s style list — never photos. It doesn’t rate how you look.
         </Text>
       </View>
-      <Button label="Let’s Start" onPress={onClose} />
+      <Button
+        label="Let’s Start"
+        onPress={() => {
+          onClose();
+          onStart?.();
+        }}
+      />
       <Text
         accessibilityRole="button"
         onPress={onClose}

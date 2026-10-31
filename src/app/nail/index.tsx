@@ -5,19 +5,12 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { nailStudioImages } from '@/assets/images';
-import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
 import { ModeCard } from '@/components/ui/mode-card';
-import { Sheet } from '@/components/ui/sheet';
 import { useNailSession } from '@/features/nail/nail-session';
 import { colors, shadows } from '@/theme';
-
-const TUTORIAL_STEPS = [
-  'Add a clear photo of your hand.',
-  'Choose an inspiration or customize your nails.',
-  'Generate a preview and compare your results.',
-];
+import { NailTutorial } from '@/features/tutorials/sheets';
 
 export default function NailStudio() {
   const insets = useSafeAreaInsets();
@@ -154,45 +147,7 @@ export default function NailStudio() {
         </Text>
       </ScrollView>
 
-      <Sheet
-        visible={tutorialOpen}
-        onClose={closeTutorial}
-        eyebrow="Nail Studio"
-        title={
-          <>
-            How Nail Try-On <Text className="font-serif-italic text-plum">Works</Text>
-          </>
-        }>
-        <Text className="font-sans text-body-m text-muted">
-          Two ways to try a look. Both start with a clear photo of your hand.
-        </Text>
-        <View className="gap-3 rounded-[22px] border border-blush bg-card p-3">
-          {TUTORIAL_STEPS.map((step, index) => (
-            <View key={step} className="flex-row items-center gap-3">
-              <View
-                className={`h-8 w-8 items-center justify-center rounded-full ${
-                  index === 0 ? 'bg-plum' : 'bg-blush'
-                }`}>
-                <Text
-                  className={`font-serif-italic text-[18px] leading-[22px] ${
-                    index === 0 ? 'text-white' : 'text-plum'
-                  }`}>
-                  {index + 1}
-                </Text>
-              </View>
-              <Text className="flex-1 font-sans text-body-m text-ink">{step}</Text>
-            </View>
-          ))}
-        </View>
-        <Text className="font-sans text-caption text-muted">Replay this anytime from the ? at the top.</Text>
-        <Button
-          label="Let’s Try It"
-          onPress={() => {
-            closeTutorial();
-            start();
-          }}
-        />
-      </Sheet>
+      <NailTutorial visible={tutorialOpen} onClose={closeTutorial} onStart={start} />
     </View>
   );
 }

@@ -39,12 +39,12 @@ export default function Home() {
             <Wordmark />
           </View>
           <View className="flex-row gap-1">
-            <IconButton icon="help" label="Help" onPress={() => router.push('/pending/help')} />
+            <IconButton icon="help" label="Tutorials and help" onPress={() => router.push('/help')} />
             <IconButton
               icon="user"
               label="Profile and settings"
               tonal
-              onPress={() => router.push('/pending/settings')}
+              onPress={() => router.push('/settings')}
             />
           </View>
         </View>

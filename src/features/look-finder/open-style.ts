@@ -1,5 +1,6 @@
-import type { QueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { useState } from 'react';
 
 import { useHairColorSession } from '@/features/hair-color/hair-color-session';
 import { FULL_PRESETS, ombrePresetName, OMBRE_PRESETS } from '@/features/hair-color/presets';
@@ -69,4 +70,24 @@ export async function openStyle(style: CatalogueStyle, queryClient: QueryClient)
       return;
     }
   }
+}
+
+/** "Try This Look" with one-at-a-time opening and a readable problem message. */
+export function useTryLook() {
+  const queryClient = useQueryClient();
+  const [opening, setOpening] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const tryLook = async (style: CatalogueStyle) => {
+    if (opening) return;
+    setOpening(style.id);
+    setProblem(null);
+    try {
+      await openStyle(style, queryClient);
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'This style couldn’t be opened right now.');
+    } finally {
+      setOpening(null);
+    }
+  };
+  return { tryLook, opening, problem };
 }

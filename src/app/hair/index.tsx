@@ -5,21 +5,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { hairStudioImages } from '@/assets/images';
-import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
 import { ModeCard } from '@/components/ui/mode-card';
-import { Sheet } from '@/components/ui/sheet';
 import { Thumb } from '@/components/ui/thumb';
 import { useHairSession } from '@/features/hair/hair-session';
 import { photoExists } from '@/lib/photo';
 import { colors, shadows } from '@/theme';
-
-const TUTORIAL_STEPS = [
-  'Add a clear photo of yourself.',
-  'Choose a hairstyle from the gallery.',
-  'Generate a preview, compare and save your favorites.',
-];
+import { HairTutorial } from '@/features/tutorials/sheets';
 
 const STRIP = [
   { label: 'Choose', detail: 'A style you like' },
@@ -200,48 +193,7 @@ export default function HairStudio() {
         </Text>
       </ScrollView>
 
-      <Sheet
-        visible={tutorialOpen}
-        onClose={closeTutorial}
-        eyebrow="Hair Studio · First time"
-        title={
-          <>
-            How Hair Try-On <Text className="font-serif-italic text-plum">Works</Text>
-          </>
-        }>
-        <View className="gap-3 rounded-[22px] border border-blush bg-card p-3">
-          {TUTORIAL_STEPS.map((step, index) => (
-            <View key={step} className="flex-row items-center gap-3">
-              <View
-                className={`h-8 w-8 items-center justify-center rounded-full ${index === 0 ? 'bg-plum' : 'bg-blush'}`}>
-                <Text
-                  className={`font-serif-italic text-[18px] leading-[22px] ${
-                    index === 0 ? 'text-white' : 'text-plum'
-                  }`}>
-                  {index + 1}
-                </Text>
-              </View>
-              <Text className="flex-1 font-sans text-body-m text-ink">{step}</Text>
-            </View>
-          ))}
-        </View>
-        <Text className="font-sans text-caption text-muted">
-          Works from a photo, not a live camera. Replay this anytime from the ? at the top.
-        </Text>
-        <Button
-          label="Let’s Try It"
-          onPress={() => {
-            closeTutorial();
-            start();
-          }}
-        />
-        <Text
-          accessibilityRole="button"
-          onPress={closeTutorial}
-          className="self-center px-4 py-2 font-sans-semibold text-label text-plum">
-          Skip Tutorial
-        </Text>
-      </Sheet>
+      <HairTutorial visible={tutorialOpen} onClose={closeTutorial} onStart={start} />
     </View>
   );
 }
