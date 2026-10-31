@@ -3,6 +3,7 @@
 //   POST /lookbook   { taskId, title, designSource, designId?, note? }  -> { look }   (explicit Save;
 //                    saving an already-saved look again only updates its note)
 //   GET  /lookbook                                               -> { looks }
+//   DELETE /lookbook?id=<look id>                                -> { deleted, id }  (own looks only)
 //
 // Save copies the genuine YouCam result for one of the caller's own successful tasks into
 // private Cloudinary storage and records it. It never creates a YouCam task, so saving and
@@ -81,11 +82,83 @@ async function publicLook(row: LookRow, cloudinary: Cloudinary) {
   };
 }
 
-async function listLooks({ userId, db }: Caller, cloudinary: Cloudinary): Promise<Response> {
+type PendingRow = { id: string; image_public_id: string };
+
+/**
+ * Finishes deleting one look that is already hidden (status pending_delete): its private image —
+ * only if no other saved look still uses the same image — then its row. Returns false if anything
+ * is left, so the caller never reports a deletion that didn't fully happen.
+ */
+async function finishDelete({ userId, db }: Caller, cloudinary: Cloudinary, row: PendingRow): Promise<boolean> {
+  const { count, error: refError } = await db
+    .from('saved_looks')
+    .select('id', { count: 'exact', head: true })
+    .eq('image_public_id', row.image_public_id)
+    .neq('id', row.id);
+  if (refError) return false;
+  if (!count) {
+    try {
+      await cloudinary.destroyPrivateImage(row.image_public_id);
+    } catch {
+      console.error('saved look image delete failed', { lookId: row.id });
+      return false;
+    }
+  }
+  const { error } = await db.from('saved_looks').delete().eq('id', row.id).eq('user_id', userId);
+  if (error) console.error('saved look row delete failed', { lookId: row.id, code: error.code });
+  return !error;
+}
+
+async function deleteLook(req: Request, caller: Caller, cloudinary: Cloudinary): Promise<Response> {
+  const { userId, db } = caller;
+  const id = new URL(req.url).searchParams.get('id');
+  if (!id || !UUID_PATTERN.test(id)) return fail(400, 'invalid_request', 'id must be a UUID.');
+
+  // Ownership: only the caller's own look is found; another guest's id looks like a missing one.
+  const { data: row, error } = await db
+    .from('saved_looks')
+    .select('id, image_public_id, status')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .maybeSingle<PendingRow & { status: string }>();
+  if (error) return fail(500, 'server_error', 'Could not find this look. Nothing was deleted.');
+  if (!row) return fail(404, 'not_found', 'This look is no longer in your Lookbook.');
+
+  // 1. Hidden at once (and marked for retry if a later step fails).
+  if (row.status !== 'pending_delete') {
+    const { error: hideError } = await db
+      .from('saved_looks')
+      .update({ status: 'pending_delete' })
+      .eq('id', row.id)
+      .eq('user_id', userId);
+    if (hideError) return fail(500, 'server_error', 'Could not delete this look. Nothing was deleted.');
+  }
+  // 2–3. Image, then record.
+  if (!(await finishDelete(caller, cloudinary, row))) {
+    return fail(503, 'delete_incomplete', 'This look is hidden, but its saved image couldn’t be deleted yet.', {
+      lookId: row.id,
+    });
+  }
+  return json({ deleted: true, id: row.id });
+}
+
+async function listLooks(caller: Caller, cloudinary: Cloudinary): Promise<Response> {
+  const { userId, db } = caller;
+  // Retry any deletion that didn't finish earlier (best effort; never blocks the list).
+  const { data: pending } = await db
+    .from('saved_looks')
+    .select('id, image_public_id')
+    .eq('user_id', userId)
+    .eq('status', 'pending_delete')
+    .limit(5)
+    .returns<PendingRow[]>();
+  for (const row of pending ?? []) await finishDelete(caller, cloudinary, row);
+
   const { data, error } = await db
     .from('saved_looks')
     .select(LOOK_COLUMNS)
     .eq('user_id', userId)
+    .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(100)
     .returns<LookRow[]>();
@@ -110,9 +183,22 @@ async function saveLook(req: Request, { userId, db }: Caller, cloudinary: Cloudi
 
   // Saving the same preview again returns the look that already exists.
   const findExisting = () =>
-    db.from('saved_looks').select(LOOK_COLUMNS).eq('user_id', userId).eq('task_id', taskId).maybeSingle<LookRow>();
-  const existing = await findExisting();
+    db
+      .from('saved_looks')
+      .select(`${LOOK_COLUMNS}, status`)
+      .eq('user_id', userId)
+      .eq('task_id', taskId)
+      .maybeSingle<LookRow & { status: string }>();
+  let existing = await findExisting();
   if (existing.error) return fail(500, 'server_error', 'Could not check your Lookbook.');
+  // A look being deleted is finished off first, so saving again creates a fresh look.
+  if (existing.data?.status === 'pending_delete') {
+    if (!(await finishDelete({ userId, db }, cloudinary, existing.data))) {
+      return fail(409, 'delete_pending', 'This look is still being deleted. Please try saving again shortly.');
+    }
+    existing = await findExisting();
+    if (existing.error) return fail(500, 'server_error', 'Could not check your Lookbook.');
+  }
   if (existing.data) {
     // Already saved: nothing is uploaded again; only a newly written note is recorded.
     if (note && note !== existing.data.note) {
@@ -226,6 +312,7 @@ export default {
 
     if (req.method === 'GET') return listLooks(caller, cloudinary);
     if (req.method === 'POST') return saveLook(req, caller, cloudinary);
-    return fail(405, 'method_not_allowed', 'Use GET to list looks or POST to save one.');
+    if (req.method === 'DELETE') return deleteLook(req, caller, cloudinary);
+    return fail(405, 'method_not_allowed', 'Use GET to list looks, POST to save one or DELETE to remove one.');
   },
 };

@@ -16,6 +16,7 @@ import type { HairColorMode } from '@/features/hair-color/presets';
 import { useHairSession } from '@/features/hair/hair-session';
 import { chooseFromGallery, isPhotoReadable, takePhoto, type PickedImage, type PickOutcome } from '@/lib/photo';
 import { colors } from '@/theme';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 
 const FIT = {
   maxWidth: HAIR_COLOR_MAX_WIDTH,
@@ -50,7 +51,9 @@ export default function HairColorPhoto() {
   const insets = useSafeAreaInsets();
   // `edit=1` means we were opened from a later step to swap the photo, so Continue goes back there.
   const { edit } = useLocalSearchParams<{ edit?: string }>();
-  const photo = useHairColorSession((state) => state.photo);
+  // A photo whose cached file Android cleared counts as no photo, so the picker shows again.
+  const storedPhoto = useHairColorSession((state) => state.photo);
+  const photo = usePhotoAvailable(storedPhoto?.uri) ? storedPhoto : null;
   const setPhoto = useHairColorSession((state) => state.setPhoto);
   const mode = useHairColorSession((state) => state.mode);
   const setMode = useHairColorSession((state) => state.setMode);

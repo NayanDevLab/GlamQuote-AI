@@ -78,5 +78,34 @@ export function createCloudinaryClient(config: CloudinaryConfig) {
     return `https://res.cloudinary.com/${config.cloudName}/image/authenticated/s--${signature}--/${path}`;
   }
 
-  return { uploadPrivateImage, signedImageUrl };
+  /**
+   * Permanently deletes one private image (and invalidates CDN copies). Resolves when Cloudinary
+   * confirms it is gone: "ok", or "not found" for an image already deleted by an earlier attempt.
+   * Throws otherwise, so a caller never reports a deletion that didn't happen.
+   */
+  async function destroyPrivateImage(publicId: string): Promise<'deleted' | 'already_gone'> {
+    const params = {
+      invalidate: 'true',
+      public_id: publicId,
+      timestamp: String(Math.floor(Date.now() / 1000)),
+      type: 'authenticated',
+    };
+    const form = new FormData();
+    for (const [name, value] of Object.entries(params)) form.append(name, value);
+    form.append('api_key', config.apiKey);
+    form.append('signature', await signUploadParams(params, config.apiSecret));
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${config.cloudName}/image/destroy`, {
+      method: 'POST',
+      body: form,
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!response.ok) throw new Error(`Cloudinary destroy failed with HTTP ${response.status}.`);
+    const body = (await response.json().catch(() => null)) as { result?: unknown } | null;
+    if (body?.result === 'ok') return 'deleted';
+    if (body?.result === 'not found') return 'already_gone';
+    throw new Error('Cloudinary did not confirm the deletion.');
+  }
+
+  return { uploadPrivateImage, signedImageUrl, destroyPrivateImage };
 }

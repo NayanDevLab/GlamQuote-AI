@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { FlowHeader, FooterBar, NailSwatches } from '@/features/nail/components';
 import { customDesignFrom, useNailSession, type NailDesign, type PickedImage } from '@/features/nail/nail-session';
-import { isPhotoReadable } from '@/lib/photo';
 import { colors } from '@/theme';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 
 function InputTile({
   label,
@@ -62,20 +61,10 @@ export default function NailReview() {
   const startAttempt = useNailSession((state) => state.startAttempt);
   // Selected photos live in the app cache, which Android may clear between sessions. A thumbnail
   // can still show from the image cache, so check the real files before offering Generate.
-  const [missing, setMissing] = useState<'hand' | 'reference' | null>(null);
-  const handUri = hand?.uri;
-  const referenceUri = isCustom ? undefined : reference?.image.uri;
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const handOk = !handUri || (await isPhotoReadable(handUri));
-      const referenceOk = !referenceUri || (await isPhotoReadable(referenceUri));
-      if (active) setMissing(!handOk ? 'hand' : !referenceOk ? 'reference' : null);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [handUri, referenceUri]);
+  // Re-checked on focus and when the app returns to the foreground.
+  const handOk = usePhotoAvailable(hand?.uri);
+  const referenceOk = usePhotoAvailable(isCustom ? undefined : reference?.image.uri);
+  const missing: 'hand' | 'reference' | null = !handOk ? 'hand' : !referenceOk ? 'reference' : null;
 
   if (!hand) return <Redirect href={isCustom ? '/nail/photo?next=editor' : '/nail/photo'} />;
   const design: NailDesign | null = isCustom ? customDesignFrom(mode, polish, press) : reference;

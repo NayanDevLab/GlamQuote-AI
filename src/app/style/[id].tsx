@@ -11,34 +11,8 @@ import { InlineNote } from '@/components/ui/typography';
 import { findSampleStyle } from '@/features/explore/sample-catalogue';
 import { findStyle, TYPE_LABEL, type CatalogueStyle } from '@/features/look-finder/catalogue';
 import { StyleThumb } from '@/features/look-finder/components';
-import { useTryLook } from '@/features/look-finder/open-style';
+import { styleSetupLines, useTryLook } from '@/features/look-finder/open-style';
 import { colors, shadows } from '@/theme';
-
-/** The settings a catalogue style preselects, in plain words (from its trusted destination). */
-function setupLines(style: CatalogueStyle): string[] {
-  const d = style.destination;
-  switch (d.studio) {
-    case 'hairstyle':
-      return [`YouCam hairstyle template: ${style.name}`];
-    case 'hair_color':
-      return [`${d.mode === 'full' ? 'Full color' : 'Ombre'} preset: ${d.preset}`];
-    case 'nail_polish':
-      return [
-        `Color: ${style.name.split(' · ')[0]} (${d.color})`,
-        `Finish: ${style.name.split(' · ')[1]}`,
-        'All fingers',
-      ];
-    case 'press_on': {
-      const [shapeAndLength, colorAndFinish] = style.name.split(' · ');
-      const cap = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
-      return [
-        `${cap(d.tip)} tip, ${cap(d.base)} base`,
-        `Length: ${shapeAndLength.replace(/\s*\S+$/, '')}`,
-        `Color & finish: ${colorAndFinish} (${d.color})`,
-      ];
-    }
-  }
-}
 
 function SimilarRow({ style, busy, onTry }: { style: CatalogueStyle; busy: boolean; onTry: () => void }) {
   return (
@@ -128,7 +102,7 @@ export default function StyleDetails() {
               </View>
             </View>
             <View className="gap-1.5">
-              {setupLines(supported).map((line) => (
+              {styleSetupLines(supported).map((line) => (
                 <View key={line} className="flex-row items-center gap-2">
                   <Icon name="check" size={15} color={colors.plum} strokeWidth={2.2} />
                   <Text className="flex-1 font-sans text-body-s text-ink">{line}</Text>

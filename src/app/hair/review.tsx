@@ -1,6 +1,5 @@
 import { Image, type ImageSource } from 'expo-image';
 import { Redirect, router } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,7 +9,7 @@ import { FooterBar } from '@/components/ui/footer-bar';
 import { Icon } from '@/components/ui/icon';
 import { HAIR_STEPS } from '@/features/hair/components';
 import { useHairSession } from '@/features/hair/hair-session';
-import { isPhotoReadable } from '@/lib/photo';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 import { colors } from '@/theme';
 
 function Figure({
@@ -19,22 +18,36 @@ function Figure({
   caption,
   action,
   onAction,
+  unavailable = false,
 }: {
   label: string;
   uri: string | ImageSource;
   caption?: string;
   action: string;
   onAction: () => void;
+  /** The file is gone: show a placeholder, never a blank image. */
+  unavailable?: boolean;
 }) {
   return (
     <View className="flex-1 gap-2">
       <View className="overflow-hidden rounded-lg bg-blush">
-        <Image
-          source={typeof uri === 'string' ? { uri } : uri}
-          contentFit="cover"
-          accessibilityLabel={caption ? `${label}: ${caption}` : label}
-          style={{ width: '100%', aspectRatio: 4 / 5 }}
-        />
+        {unavailable ? (
+          <View
+            accessible
+            accessibilityLabel={`${label}: no longer available`}
+            className="w-full items-center justify-center gap-2 px-3"
+            style={{ aspectRatio: 4 / 5 }}>
+            <Icon name="image" size={24} color={colors.plum} />
+            <Text className="text-center font-sans text-caption text-muted">No longer available</Text>
+          </View>
+        ) : (
+          <Image
+            source={typeof uri === 'string' ? { uri } : uri}
+            contentFit="cover"
+            accessibilityLabel={caption ? `${label}: ${caption}` : label}
+            style={{ width: '100%', aspectRatio: 4 / 5 }}
+          />
+        )}
         <View className="absolute left-2.5 top-2.5 rounded-full bg-canvas/95 px-2.5 py-[5px]">
           <Text className="font-sans-semibold text-caption text-ink">{label}</Text>
         </View>
@@ -65,19 +78,9 @@ export default function HairReview() {
   const setConsent = useHairSession((state) => state.setConsent);
   const attempt = useHairSession((state) => state.attempt);
   const startAttempt = useHairSession((state) => state.startAttempt);
-  // The selfie lives in the app cache, which Android may clear. Check the file before Generate.
-  const [missing, setMissing] = useState(false);
-  const selfieUri = selfie?.uri;
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const ok = !selfieUri || (await isPhotoReadable(selfieUri));
-      if (active) setMissing(!ok);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [selfieUri]);
+  // The selfie lives in the app cache, which Android may clear (also while the app is in the
+  // background). Re-checked on focus and resume; Generate stays disabled while it's missing.
+  const missing = !usePhotoAvailable(selfie?.uri);
 
   if (!selfie) return <Redirect href="/hair/photo" />;
   if (!template) return <Redirect href="/hair/styles" />;
@@ -100,6 +103,7 @@ export default function HairReview() {
           <Figure
             label="Your Selfie"
             uri={selfie.uri}
+            unavailable={missing}
             action="Edit Photo"
             onAction={() => router.push('/hair/photo?edit=1')}
           />

@@ -56,6 +56,15 @@ export async function saveLook(input: {
   return look;
 }
 
+/**
+ * Deletes one of the guest's own saved looks: its saved AI preview image and its record. Throws
+ * EdgeFunctionError 'delete_incomplete' if the look is hidden but its image isn't deleted yet
+ * (the server retries it); resolves only once everything is gone.
+ */
+export async function deleteLook(id: string): Promise<void> {
+  await invokeEdgeFunction<{ deleted: true }>(`lookbook?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
 /** The studio a saved look came from, for labels such as "Hair · AI Preview". */
 export function lookArea(look: SavedLook): 'Hair' | 'Nails' {
   return look.kind === 'hairstyle' || look.kind === 'hair_color' ? 'Hair' : 'Nails';

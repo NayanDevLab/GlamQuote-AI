@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { FooterBar } from '@/components/ui/footer-bar';
 import { IconButton } from '@/components/ui/icon-button';
 import { PhotoSlot } from '@/components/ui/photo-slot';
+import { PhotoUnavailableCard } from '@/components/ui/photo-unavailable';
 import { Thumb } from '@/components/ui/thumb';
 import type { PickedImage } from '@/lib/photo';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 import { colors, shadows } from '@/theme';
 
 import { HairSwatch, SampleNote } from './components';
@@ -26,6 +28,9 @@ export function EditorHeader({ title }: { title: string }) {
 
 /** "Your photo" row: the original photo the color will be applied to. */
 export function PhotoRow({ photo }: { photo: PickedImage }) {
+  // Android may clear the cached copy; show what happened instead of a blank thumbnail.
+  const available = usePhotoAvailable(photo.uri);
+  if (!available) return <PhotoUnavailableCard onChoose={() => router.push('/hair/color/photo?edit=1')} />;
   return (
     <View className="flex-row items-center gap-3 rounded-lg border border-blush bg-card p-3">
       <Thumb uri={photo.uri} size={48} />

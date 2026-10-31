@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { FlowHeader } from '@/components/ui/flow-header';
 import { FooterBar } from '@/components/ui/footer-bar';
 import { Icon } from '@/components/ui/icon';
+import { PhotoUnavailableCard } from '@/components/ui/photo-unavailable';
 import { Thumb } from '@/components/ui/thumb';
 import { HAIR_STEPS, TemplateImage } from '@/features/hair/components';
 import { HAIR_TEMPLATES_QUERY_KEY, listHairTemplates, type HairTemplate } from '@/features/hair/hair-api';
 import { useHairSession } from '@/features/hair/hair-session';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 import { colors, shadows } from '@/theme';
 
 function TemplateCard({
@@ -54,6 +56,7 @@ export default function HairStyles() {
   const selfie = useHairSession((state) => state.selfie);
   const template = useHairSession((state) => state.template);
   const setTemplate = useHairSession((state) => state.setTemplate);
+  const photoAvailable = usePhotoAvailable(selfie?.uri);
   const [search, setSearch] = useState('');
 
   const {
@@ -92,19 +95,23 @@ export default function HairStyles() {
             Find Your Next <Text className="font-serif-italic text-plum">Hairstyle.</Text>
           </Text>
 
-          <View className="flex-row items-center gap-3 rounded-lg border border-blush bg-card p-3">
-            <Thumb uri={selfie.uri} size={48} />
-            <View className="flex-1">
-              <Text className="font-sans-semibold text-label-s text-ink">Your photo</Text>
-              <Text className="font-sans text-body-s text-muted">Kept while you browse</Text>
+          {!photoAvailable ? (
+            <PhotoUnavailableCard onChoose={() => router.push('/hair/photo?edit=1')} />
+          ) : (
+            <View className="flex-row items-center gap-3 rounded-lg border border-blush bg-card p-3">
+              <Thumb uri={selfie.uri} size={48} />
+              <View className="flex-1">
+                <Text className="font-sans-semibold text-label-s text-ink">Your photo</Text>
+                <Text className="font-sans text-body-s text-muted">Kept while you browse</Text>
+              </View>
+              <Text
+                accessibilityRole="button"
+                onPress={() => router.push('/hair/photo?edit=1')}
+                className="py-2 pl-3 font-sans-semibold text-label-s text-plum">
+                Change
+              </Text>
             </View>
-            <Text
-              accessibilityRole="button"
-              onPress={() => router.push('/hair/photo?edit=1')}
-              className="py-2 pl-3 font-sans-semibold text-label-s text-plum">
-              Change
-            </Text>
-          </View>
+          )}
 
           <View className="h-[52px] flex-row items-center gap-2.5 rounded-full border border-line bg-card px-[18px]">
             <Icon name="search" size={20} color={colors.muted} />
@@ -182,7 +189,7 @@ export default function HairStyles() {
         <Button
           label="Preview This Hairstyle"
           trailingIcon="arrowRight"
-          disabled={!template}
+          disabled={!template || !photoAvailable}
           onPress={() => router.push('/hair/review')}
         />
       </FooterBar>

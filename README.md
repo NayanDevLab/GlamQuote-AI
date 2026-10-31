@@ -17,10 +17,12 @@ Phase 1 only uses modules bundled with Expo Go. Once a library with custom nativ
 ## Checks
 
 ```bash
-npm run typecheck   # tsc --noEmit
+npm run typecheck   # regenerates route types from src/app, then tsc --noEmit
 npm run lint        # expo lint
 npx expo-doctor     # config and dependency validation
 ```
+
+Use `npm run typecheck` rather than a bare `tsc`: on Windows, a running `expo start` rewrites `.expo/types/router.d.ts` incorrectly after edits (its watcher mishandles Windows \ paths), and `scripts/route-types.mjs` regenerates it from a full scan first.
 
 ## Layout
 

@@ -5,7 +5,11 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
 import { Icon } from '@/components/ui/icon';
+import { findStyle, TYPE_LABEL } from '@/features/look-finder/catalogue';
+import { StyleThumb } from '@/features/look-finder/components';
+import { styleSetupLines, useTryLook } from '@/features/look-finder/open-style';
 import { FlowHeader, FooterBar, Thumb } from '@/features/nail/components';
 import { useNailSession } from '@/features/nail/nail-session';
 import { chooseFromGallery } from '@/lib/photo';
@@ -13,6 +17,8 @@ import { colors, shadows } from '@/theme';
 
 import type { ImageSource } from 'expo-image';
 import { nailStudioImages } from '@/assets/images';
+import { PhotoUnavailableCard } from '@/components/ui/photo-unavailable';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 
 type CuratedCategory = 'all' | 'minimal' | 'french' | 'chrome' | 'art';
 
@@ -98,6 +104,33 @@ const CURATED_DESIGNS: {
   },
 ];
 
+/**
+ * Curated photos are editorial samples, never sent to YouCam. A design opens Nail Virtual Try-On
+ * only where a verified catalogue setup matches it (same ids as Explore and Look Finder).
+ */
+const CURATED_MATCH: Record<string, { styleId: string; caveat: string }> = {
+  milky_nude: {
+    styleId: 'nail_polish.milk_cream',
+    caveat: 'Nail Polish colors your own nails and keeps their shape.',
+  },
+  plum_chrome: {
+    styleId: 'press_on.almond_oval_1_8_plum_metallic',
+    caveat: 'YouCam has no chrome finish — Metallic is the closest supported one.',
+  },
+  champagne_chrome: {
+    styleId: 'press_on.oval_oval_1_4_champagne_metallic',
+    caveat: 'The closest verified champagne set has an oval tip, and Metallic is YouCam’s closest finish to chrome.',
+  },
+};
+
+/** Why a design can't be recreated with Nail Virtual Try-On. */
+const INSPIRATION_WHY: Record<Exclude<CuratedCategory, 'all'>, string> = {
+  minimal: 'There’s no verified setup for this shade yet. You can choose a matte finish and your own color.',
+  french: 'Nail Virtual Try-On applies solid colors, so French tips can’t be recreated with it.',
+  chrome: 'There’s no verified setup for this shade yet.',
+  art: 'Nail Virtual Try-On applies solid colors, so nail art can’t be recreated with it.',
+};
+
 const REFERENCE_NAME = 'Your reference photo';
 
 export default function NailDesigns() {
@@ -105,10 +138,13 @@ export default function NailDesigns() {
   const hand = useNailSession((state) => state.hand);
   const design = useNailSession((state) => state.design);
   const setDesign = useNailSession((state) => state.setDesign);
+  const handAvailable = usePhotoAvailable(hand?.uri);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CuratedCategory>('all');
   const [activeInspiration, setActiveInspiration] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const { tryLook, opening, problem } = useTryLook();
 
   const filteredDesigns =
     selectedCategory === 'all'
@@ -139,19 +175,23 @@ export default function NailDesigns() {
           Find Your Nail <Text className="font-serif-italic text-plum">Design</Text>
         </Text>
 
-        <View className="flex-row items-center gap-3 rounded-lg border border-blush bg-card p-3">
-          <Thumb image={hand} size={48} />
-          <View className="flex-1">
-            <Text className="font-sans-semibold text-label-s text-ink">Your hand photo</Text>
-            <Text className="font-sans text-body-s text-muted">Kept while you choose a design</Text>
+        {!handAvailable ? (
+          <PhotoUnavailableCard label="Your hand photo" onChoose={() => router.push('/nail/photo?edit=1')} />
+        ) : (
+          <View className="flex-row items-center gap-3 rounded-lg border border-blush bg-card p-3">
+            <Thumb image={hand} size={48} />
+            <View className="flex-1">
+              <Text className="font-sans-semibold text-label-s text-ink">Your hand photo</Text>
+              <Text className="font-sans text-body-s text-muted">Kept while you choose a design</Text>
+            </View>
+            <Text
+              accessibilityRole="button"
+              onPress={() => router.push('/nail/photo?edit=1')}
+              className="py-2 pl-3 font-sans-semibold text-label-s text-plum">
+              Change
+            </Text>
           </View>
-          <Text
-            accessibilityRole="button"
-            onPress={() => router.push('/nail/photo?edit=1')}
-            className="py-2 pl-3 font-sans-semibold text-label-s text-plum">
-            Change
-          </Text>
-        </View>
+        )}
 
         <View className="gap-2.5">
           <Text className="font-sans-semibold text-overline uppercase text-muted">Use your own inspiration</Text>
@@ -249,8 +289,12 @@ export default function NailDesigns() {
                 <Pressable
                   key={item.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`${item.name}, ${item.catLabel}. ${item.alt}`}
-                  onPress={() => setActiveInspiration(isInspected ? null : item.id)}
+                  accessibilityLabel={`${item.name}, ${item.catLabel}. ${CURATED_MATCH[item.id] ? 'Can be tried on.' : 'Inspiration.'} Show options`}
+                  accessibilityState={{ selected: isInspected }}
+                  onPress={() => {
+                    setActiveInspiration(item.id);
+                    setSheetOpen(true);
+                  }}
                   style={isInspected ? shadows.card : undefined}
                   className={`w-[48%] rounded-lg bg-card p-1.5 ${
                     isInspected ? 'border-2 border-plum' : 'border border-line'
@@ -279,7 +323,7 @@ export default function NailDesigns() {
           <View className="flex-row items-center gap-2 rounded-lg bg-blush p-3">
             <Icon name="info" size={16} color={colors.plum} />
             <Text className="flex-1 font-sans text-body-s text-ink">
-              These catalogue photos showcase popular salon styles. To preview a design on your hand, upload your reference photo above or customize colors in Nail Polish mode.
+              Catalogue photos are samples, not previews. Tap one to see whether it can be tried on, or upload your own reference photo above.
             </Text>
           </View>
         </View>
@@ -295,10 +339,123 @@ export default function NailDesigns() {
         <Button
           label="Preview This Design"
           trailingIcon="arrowRight"
-          disabled={!design}
+          disabled={!design || !handAvailable}
           onPress={() => router.push('/nail/review')}
         />
       </FooterBar>
+
+      <CuratedSheet
+        design={CURATED_DESIGNS.find((item) => item.id === activeInspiration) ?? null}
+        visible={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        opening={opening !== null}
+        problem={problem}
+        onTry={(styleId) => {
+          const style = findStyle(styleId);
+          if (!style) return;
+          setSheetOpen(false);
+          tryLook(style);
+        }}
+        onUpload={() => {
+          setSheetOpen(false);
+          pickReference();
+        }}
+        onCustomize={() => {
+          setSheetOpen(false);
+          router.push('/nail/editor');
+        }}
+      />
     </View>
+  );
+}
+
+/** What a curated design can do: open its verified setup, or explain why it's inspiration only. */
+function CuratedSheet({
+  design,
+  visible,
+  onClose,
+  opening,
+  problem,
+  onTry,
+  onUpload,
+  onCustomize,
+}: {
+  design: (typeof CURATED_DESIGNS)[number] | null;
+  visible: boolean;
+  onClose: () => void;
+  opening: boolean;
+  problem: string | null;
+  onTry: (styleId: string) => void;
+  onUpload: () => void;
+  onCustomize: () => void;
+}) {
+  if (!design) return null;
+  const match = CURATED_MATCH[design.id];
+  // Re-resolved from the catalogue: an unknown id simply falls back to inspiration.
+  const style = match ? findStyle(match.styleId) : undefined;
+  const supported = style && style.category === 'nails' ? style : undefined;
+  return (
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      eyebrow={design.catLabel}
+      title={<Text className="font-serif text-title-lg text-ink">{design.name}</Text>}>
+      <View className="overflow-hidden rounded-lg bg-blush">
+        <Image
+          source={design.image}
+          contentFit="cover"
+          accessibilityLabel={`Catalogue photo: ${design.alt}. Not a preview of your hand.`}
+          style={{ width: '100%', aspectRatio: 16 / 9 }}
+        />
+        <View className="absolute bottom-2 left-2 rounded-full bg-canvas/95 px-2.5 py-1">
+          <Text className="font-sans-semibold text-caption text-ink">Catalogue photo · not your preview</Text>
+        </View>
+      </View>
+
+      {supported && match ? (
+        <>
+          <View className="flex-row items-center gap-3 rounded-[18px] border border-blush bg-card p-3">
+            <StyleThumb style={supported} size={56} />
+            <View className="flex-1 gap-0.5">
+              <Text className="font-sans-semibold text-overline uppercase text-plum">Ready to try</Text>
+              <Text className="font-sans-semibold text-label-s text-ink">{supported.name}</Text>
+              <Text className="font-sans text-caption text-muted">
+                {TYPE_LABEL[supported.type]} · {styleSetupLines(supported).slice(0, 2).join(' · ')}
+              </Text>
+            </View>
+          </View>
+          <Text className="font-sans text-caption text-muted">{match.caveat}</Text>
+          <Button
+            label={opening ? 'Opening…' : 'Customize This Look'}
+            trailingIcon="arrowRight"
+            disabled={opening}
+            onPress={() => onTry(supported.id)}
+          />
+        </>
+      ) : (
+        <>
+          <View className="gap-1.5 rounded-[18px] bg-blush p-3">
+            <View className="flex-row items-center gap-2">
+              <Icon name="image" size={16} color={colors.plum} />
+              <Text className="font-sans-semibold text-label-s text-ink">Inspiration only</Text>
+            </View>
+            <Text className="font-sans text-body-s text-ink">
+              {INSPIRATION_WHY[design.cat as Exclude<CuratedCategory, 'all'>]} To try a design like this, upload a
+              photo of it — Nail Transfer copies a design from a reference you add.
+            </Text>
+          </View>
+          <Button label="Upload a Reference Photo" icon="upload" onPress={onUpload} />
+          <Button label="Customize My Nails" variant="secondary" onPress={onCustomize} />
+        </>
+      )}
+      {problem ? (
+        <Text accessibilityLiveRegion="polite" className="font-sans text-body-s text-plum">
+          {problem}
+        </Text>
+      ) : null}
+      <Text className="text-center font-sans text-caption text-muted">
+        Nothing is generated until you review and confirm.
+      </Text>
+    </Sheet>
   );
 }

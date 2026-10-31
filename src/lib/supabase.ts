@@ -90,7 +90,7 @@ export class EdgeFunctionError extends Error {
 }
 
 type InvokeOptions = {
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'DELETE';
   body?: FormData | Record<string, unknown>;
 };
 

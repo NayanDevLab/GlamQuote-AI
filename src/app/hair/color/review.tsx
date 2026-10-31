@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { Redirect, router } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,7 +10,7 @@ import { Icon } from '@/components/ui/icon';
 import { COLOR_STEPS, HairSwatch } from '@/features/hair-color/components';
 import { useHairColorSession } from '@/features/hair-color/hair-color-session';
 import { fullChoice, ombreChoice } from '@/features/hair-color/presets';
-import { isPhotoReadable } from '@/lib/photo';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 import { colors } from '@/theme';
 
 // P4B-6 — Review & Consent. Nothing is uploaded before the box is ticked and Generate is tapped.
@@ -25,19 +24,9 @@ export default function HairColorReview() {
   const setConsent = useHairColorSession((state) => state.setConsent);
   const attempt = useHairColorSession((state) => state.attempt);
   const startAttempt = useHairColorSession((state) => state.startAttempt);
-  // The photo lives in the app cache, which Android may clear. Check the file before Generate.
-  const [missing, setMissing] = useState(false);
-  const photoUri = photo?.uri;
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const ok = !photoUri || (await isPhotoReadable(photoUri));
-      if (active) setMissing(!ok);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [photoUri]);
+  // The photo lives in the app cache, which Android may clear (also while the app is in the
+  // background). Re-checked on focus and resume; Generate stays disabled while it's missing.
+  const missing = !usePhotoAvailable(photo?.uri);
 
   if (!photo) return <Redirect href="/hair/color/photo" />;
   const choice = mode === 'full' ? fullChoice(full) : ombreChoice(ombre);
@@ -61,12 +50,23 @@ export default function HairColorReview() {
         <View className="flex-row gap-3">
           <View className="flex-1 gap-2">
             <View className="overflow-hidden rounded-lg bg-blush">
-              <Image
-                source={{ uri: photo.uri }}
-                contentFit="cover"
-                accessibilityLabel="Your original photo"
-                style={{ width: '100%', aspectRatio: 1 }}
-              />
+              {missing ? (
+                <View
+                  accessible
+                  accessibilityLabel="Your original photo: no longer available"
+                  className="w-full items-center justify-center gap-2 px-3"
+                  style={{ aspectRatio: 1 }}>
+                  <Icon name="image" size={24} color={colors.plum} />
+                  <Text className="text-center font-sans text-caption text-muted">No longer available</Text>
+                </View>
+              ) : (
+                <Image
+                  source={{ uri: photo.uri }}
+                  contentFit="cover"
+                  accessibilityLabel="Your original photo"
+                  style={{ width: '100%', aspectRatio: 1 }}
+                />
+              )}
               <View className="absolute left-2.5 top-2.5 rounded-full bg-canvas/95 px-2.5 py-[5px]">
                 <Text className="font-sans-semibold text-caption text-ink">Original photo</Text>
               </View>

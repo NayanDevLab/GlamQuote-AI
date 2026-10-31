@@ -91,3 +91,29 @@ export function useTryLook() {
   };
   return { tryLook, opening, problem };
 }
+
+/** The settings a catalogue style preselects, in plain words (from its trusted destination). */
+export function styleSetupLines(style: CatalogueStyle): string[] {
+  const d = style.destination;
+  switch (d.studio) {
+    case 'hairstyle':
+      return [`YouCam hairstyle template: ${style.name}`];
+    case 'hair_color':
+      return [`${d.mode === 'full' ? 'Full color' : 'Ombre'} preset: ${d.preset}`];
+    case 'nail_polish':
+      return [
+        `Color: ${style.name.split(' · ')[0]} (${d.color})`,
+        `Finish: ${style.name.split(' · ')[1]}`,
+        'All fingers',
+      ];
+    case 'press_on': {
+      const [shapeAndLength, colorAndFinish] = style.name.split(' · ');
+      const cap = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+      return [
+        `${cap(d.tip)} tip, ${cap(d.base)} base`,
+        `Length: ${shapeAndLength.replace(/\s*\S+$/, '')}`,
+        `Color & finish: ${colorAndFinish} (${d.color})`,
+      ];
+    }
+  }
+}

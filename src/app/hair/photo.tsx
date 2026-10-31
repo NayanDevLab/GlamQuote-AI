@@ -14,6 +14,7 @@ import { HAIR_MAX_LONG_SIDE } from '@/features/hair/hair-api';
 import { useHairSession } from '@/features/hair/hair-session';
 import { chooseFromGallery, takePhoto, type PickOutcome } from '@/lib/photo';
 import { colors } from '@/theme';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 
 // YouCam's documented selfie requirements (one face, pose limits, shoulders visible) in plain words.
 const TIPS: { good: boolean; detail: string }[] = [
@@ -33,7 +34,9 @@ export default function HairPhoto() {
   const insets = useSafeAreaInsets();
   // `edit=1` means we were opened from a later step to swap the photo, so Continue goes back there.
   const { edit } = useLocalSearchParams<{ edit?: string }>();
-  const selfie = useHairSession((state) => state.selfie);
+  // A selfie whose cached file Android cleared counts as no photo, so the picker shows again.
+  const storedSelfie = useHairSession((state) => state.selfie);
+  const selfie = usePhotoAvailable(storedSelfie?.uri) ? storedSelfie : null;
   const template = useHairSession((state) => state.template);
   const setSelfie = useHairSession((state) => state.setSelfie);
   const [busy, setBusy] = useState(false);

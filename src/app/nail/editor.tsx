@@ -25,6 +25,8 @@ import {
   type VtoMode,
 } from '@/features/nail/vto';
 import { colors } from '@/theme';
+import { PhotoUnavailableCard } from '@/components/ui/photo-unavailable';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 
 function SectionLabel({ title, value }: { title: string; value?: string }) {
   return (
@@ -139,6 +141,7 @@ function ChipRow<T extends string | number>({
 export default function NailEditor() {
   const insets = useSafeAreaInsets();
   const hand = useNailSession((state) => state.hand);
+  const handAvailable = usePhotoAvailable(hand?.uri);
   const mode = useNailSession((state) => state.vtoMode);
   const setMode = useNailSession((state) => state.setVtoMode);
   const polish = useNailSession((state) => state.polish);
@@ -187,19 +190,23 @@ export default function NailEditor() {
           </View>
         </View>
 
-        <View className="flex-row items-center gap-3 rounded-lg border border-blush bg-card p-3">
-          <Thumb image={hand} size={48} />
-          <View className="flex-1">
-            <Text className="font-sans-semibold text-label-s text-ink">Your photo</Text>
-            <Text className="font-sans text-body-s text-muted">Kept while you customize</Text>
+        {!handAvailable ? (
+          <PhotoUnavailableCard label="Your hand photo" onChoose={() => router.push('/nail/photo?edit=1')} />
+        ) : (
+          <View className="flex-row items-center gap-3 rounded-lg border border-blush bg-card p-3">
+            <Thumb image={hand} size={48} />
+            <View className="flex-1">
+              <Text className="font-sans-semibold text-label-s text-ink">Your photo</Text>
+              <Text className="font-sans text-body-s text-muted">Kept while you customize</Text>
+            </View>
+            <Text
+              accessibilityRole="button"
+              onPress={() => router.push('/nail/photo?edit=1')}
+              className="py-2 pl-3 font-sans-semibold text-label-s text-plum">
+              Change
+            </Text>
           </View>
-          <Text
-            accessibilityRole="button"
-            onPress={() => router.push('/nail/photo?edit=1')}
-            className="py-2 pl-3 font-sans-semibold text-label-s text-plum">
-            Change
-          </Text>
-        </View>
+        )}
 
         <ModeToggle mode={mode} onChange={setMode} />
         <NailSwatches colors={design.swatches} tip={mode === 'press' ? press.tip : 'oval'} />

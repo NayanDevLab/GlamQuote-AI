@@ -10,6 +10,7 @@ import { FlowHeader, FooterBar } from '@/features/nail/components';
 import { useNailSession } from '@/features/nail/nail-session';
 import { chooseFromGallery, takePhoto, type PickOutcome } from '@/lib/photo';
 import { colors } from '@/theme';
+import { usePhotoAvailable } from '@/lib/use-photo-available';
 
 // From YouCam's documented input guidance plus the approved design's photo tips.
 const TIPS: { good: boolean; label: string; detail: string }[] = [
@@ -26,7 +27,9 @@ export default function NailPhoto() {
   // `edit=1` means we were opened from a later step to swap the photo, so Continue goes back there.
   // `next=editor` continues into Customize My Nails instead of design selection.
   const { edit, next } = useLocalSearchParams<{ edit?: string; next?: string }>();
-  const hand = useNailSession((state) => state.hand);
+  // A hand photo whose cached file Android cleared counts as no photo, so the picker shows again.
+  const storedHand = useNailSession((state) => state.hand);
+  const hand = usePhotoAvailable(storedHand?.uri) ? storedHand : null;
   const setHand = useNailSession((state) => state.setHand);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
