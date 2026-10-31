@@ -15,7 +15,9 @@ const appRoot = path.join(root, 'src', 'app');
 process.env.EXPO_ROUTER_APP_ROOT = appRoot;
 
 const require = createRequire(path.join(root, 'package.json'));
-const fromCli = createRequire(require.resolve('@expo/cli/package.json', { paths: [require.resolve('expo/package.json')] }));
+const fromCli = createRequire(
+  require.resolve('@expo/cli/package.json', { paths: [require.resolve('expo/package.json')] }),
+);
 const { getTypedRoutesDeclarationFile } = fromCli('@expo/router-server/build/typed-routes/generate');
 const { requireContext } = require('expo-router/internal/testing');
 const { EXPO_ROUTER_CTX_IGNORE } = require('expo-router/_ctx-shared');
