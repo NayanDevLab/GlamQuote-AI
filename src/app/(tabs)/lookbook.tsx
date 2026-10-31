@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -8,10 +7,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LookbookStack } from '@/components/illustrations';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
+import { SavedImage } from '@/components/ui/saved-image';
 import { InlineNote } from '@/components/ui/typography';
 import { LOOKBOOK_QUERY_KEY, listSavedLooks, lookArea, type SavedLook } from '@/features/lookbook/lookbook-api';
-import { colors, shadows } from '@/theme';
 import { LookbookTutorial } from '@/features/tutorials/sheets';
+import { shadows } from '@/theme';
 
 function LookCard({ look }: { look: SavedLook }) {
   return (
@@ -21,11 +21,10 @@ function LookCard({ look }: { look: SavedLook }) {
       onPress={() => router.push({ pathname: '/look/[id]', params: { id: look.id } })}
       style={shadows.card}
       className="flex-1 rounded-lg border border-blush bg-card p-2 active:bg-canvas">
-      <Image
-        source={{ uri: look.imageUrl }}
-        contentFit="cover"
-        cachePolicy="disk"
-        style={{ width: '100%', aspectRatio: 1, borderRadius: 18, backgroundColor: colors.blush }}
+      <SavedImage
+        uri={look.imageUrl}
+        label={'AI preview: ' + look.title}
+        style={{ width: '100%', aspectRatio: 1, borderRadius: 18 }}
       />
       <View className="gap-0.5 px-2 pb-2 pt-2.5">
         <Text className="font-sans-semibold text-caption uppercase tracking-[1.3px] text-muted">

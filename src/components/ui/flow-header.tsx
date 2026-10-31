@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 
 import { colors } from '@/theme';
 
@@ -8,6 +8,9 @@ import { IconButton } from './icon-button';
 
 /** Back button plus the numbered progress (e.g. Photo → Design → Review) of a studio flow. */
 export function FlowHeader({ step, steps }: { step: number; steps: readonly string[] }) {
+  // On narrow screens or with large text, only the current step keeps its label so none is clipped.
+  const { width, fontScale } = useWindowDimensions();
+  const compact = width / fontScale < 400;
   return (
     <View className="h-12 flex-row items-center pl-2 pr-5">
       <IconButton icon="arrowLeft" label="Back" strokeWidth={1.8} onPress={() => router.back()} />
@@ -37,12 +40,13 @@ export function FlowHeader({ step, steps }: { step: number; steps: readonly stri
                   </Text>
                 )}
               </View>
-              <Text
-                className={`text-body-s ${
-                  current ? 'font-sans-semibold text-plum' : 'font-sans-medium text-muted'
-                }`}>
-                {label}
-              </Text>
+              {compact && !current ? null : (
+                <Text
+                  numberOfLines={1}
+                  className={`text-body-s ${current ? 'font-sans-semibold text-plum' : 'font-sans-medium text-muted'}`}>
+                  {label}
+                </Text>
+              )}
             </View>
           );
         })}

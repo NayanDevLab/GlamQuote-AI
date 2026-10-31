@@ -139,6 +139,8 @@ export default function NailDesigns() {
   const design = useNailSession((state) => state.design);
   const setDesign = useNailSession((state) => state.setDesign);
   const handAvailable = usePhotoAvailable(hand?.uri);
+  // The chosen reference photo lives in the same cache and can be cleared too.
+  const referenceAvailable = usePhotoAvailable(design?.image.uri);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CuratedCategory>('all');
@@ -195,7 +197,9 @@ export default function NailDesigns() {
 
         <View className="gap-2.5">
           <Text className="font-sans-semibold text-overline uppercase text-muted">Use your own inspiration</Text>
-          {design ? (
+          {design && !referenceAvailable ? (
+            <PhotoUnavailableCard label="Your reference photo" onChoose={pickReference} />
+          ) : design ? (
             <View style={shadows.card} className="gap-2.5 rounded-lg border-2 border-plum bg-card p-2">
               <Image
                 source={{ uri: design.image.uri }}
@@ -333,13 +337,13 @@ export default function NailDesigns() {
         <View className="flex-row items-center justify-between">
           <Text className="font-sans text-body-s text-muted">Selected</Text>
           <Text className="font-sans-semibold text-label-s text-ink">
-            {design ? design.name : 'No design yet'}
+            {design && referenceAvailable ? design.name : 'No design yet'}
           </Text>
         </View>
         <Button
           label="Preview This Design"
           trailingIcon="arrowRight"
-          disabled={!design || !handAvailable}
+          disabled={!design || !handAvailable || !referenceAvailable}
           onPress={() => router.push('/nail/review')}
         />
       </FooterBar>

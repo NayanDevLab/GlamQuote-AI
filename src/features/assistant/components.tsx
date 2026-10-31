@@ -45,7 +45,10 @@ export function useInsight(pair: readonly [BattleLook, BattleLook] | null, enabl
     queryKey: ['style-insight', a?.key, b?.key, preferences, note],
     queryFn: () => requestInsight({ lookA: a!.key, lookB: b!.key, preferences, note }),
     enabled: enabled && Boolean(pair),
+    // One Gemini request per tap: no automatic retry or refetch (Try Again is manual).
     retry: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
     staleTime: Infinity,
     gcTime: 30 * 60_000,
   });

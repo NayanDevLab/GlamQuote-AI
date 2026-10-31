@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/ui/icon';
 import { InlineNote } from '@/components/ui/typography';
@@ -62,14 +62,21 @@ const OPEN: Record<Exclude<Guide, 'lookbook'>, Href> = {
 };
 
 function ReplayButton({ label, onPress }: { label: string; onPress: () => void }) {
+  // Narrow screens or large text: drop the icon so the guide's title keeps its room.
+  const { width, fontScale } = useWindowDimensions();
+  const compact = width / fontScale < 400;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Replay ${label} tutorial`}
       onPress={onPress}
-      className="h-10 flex-row items-center gap-1 rounded-full border-[1.5px] border-line-strong px-3 active:bg-blush">
-      <Icon name="replay" size={15} color={colors.plum} strokeWidth={2} />
-      <Text className="font-sans-semibold text-[13px] leading-[16px] text-plum">Replay</Text>
+      className={`h-10 flex-row items-center gap-1 rounded-full border-[1.5px] border-line-strong active:bg-blush ${
+        compact ? 'px-2.5' : 'px-3'
+      }`}>
+      {compact ? null : <Icon name="replay" size={15} color={colors.plum} strokeWidth={2} />}
+      <Text numberOfLines={1} className="font-sans-semibold text-[13px] leading-[16px] text-plum">
+        Replay
+      </Text>
     </Pressable>
   );
 }

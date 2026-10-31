@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
@@ -8,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
+import { SavedImage } from '@/components/ui/saved-image';
 import { Sheet } from '@/components/ui/sheet';
 import { Thumb } from '@/components/ui/thumb';
 import {
@@ -178,13 +178,7 @@ export default function SavedLookDetail() {
           contentContainerClassName="gap-4 px-5 pt-1"
           showsVerticalScrollIndicator={false}>
           <View className="overflow-hidden rounded-lg bg-blush">
-            <Image
-              source={{ uri: look.imageUrl }}
-              contentFit="cover"
-              cachePolicy="disk"
-              accessibilityLabel={`AI preview: ${look.title}`}
-              style={{ width: '100%', aspectRatio: ratio, backgroundColor: colors.blush }}
-            />
+            <SavedImage uri={look.imageUrl} label={`AI preview: ${look.title}`} style={{ width: '100%', aspectRatio: ratio }} />
             <View className="absolute right-3 top-3 rounded-full bg-plum px-3 py-1.5">
               <Text className="font-sans-semibold text-caption text-white">{'AI Preview'}</Text>
             </View>
