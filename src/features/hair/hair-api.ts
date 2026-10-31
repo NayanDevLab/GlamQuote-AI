@@ -1,7 +1,6 @@
 import type { ImageSource } from 'expo-image';
 import { File } from 'expo-file-system';
 
-import { hairStudioImages } from '@/assets/images';
 import { invokeEdgeFunction } from '@/lib/supabase';
 
 /**
@@ -15,23 +14,13 @@ import { invokeEdgeFunction } from '@/lib/supabase';
 /** YouCam accepts at most 1024 px on the selfie's longest side. */
 export const HAIR_MAX_LONG_SIDE = 1024;
 
-/** A predefined YouCam hairstyle. `thumb` is YouCam's own sample image of the style or curated photography asset. */
+/** A predefined YouCam hairstyle. `thumb` is YouCam's own sample image of the style. */
 export type HairTemplate = {
   id: string;
   title: string;
   thumb: string | ImageSource;
   category: string | null;
 };
-
-/** Curated editorial templates matching GlamQuote AI hairstyle catalogue. */
-export const FALLBACK_HAIR_TEMPLATES: readonly HairTemplate[] = [
-  { id: 'chin-length-bob', title: 'Chin-Length Bob', thumb: hairStudioImages.hairstyles.chinLengthBob, category: 'medium' },
-  { id: 'long-soft-layers', title: 'Long Soft Layers', thumb: hairStudioImages.hairstyles.longSoftLayers, category: 'long' },
-  { id: 'defined-curls', title: 'Defined Curls', thumb: hairStudioImages.hairstyles.definedCurls, category: 'curly' },
-  { id: 'textured-crop', title: 'Textured Crop', thumb: hairStudioImages.hairstyles.texturedCrop, category: 'short' },
-  { id: 'short-fade', title: 'Short Fade', thumb: hairStudioImages.hairstyles.shortFade, category: 'short' },
-  { id: 'shoulder-locs', title: 'Shoulder Locs', thumb: hairStudioImages.hairstyles.shoulderLocs, category: 'long' },
-];
 
 export type HairTaskStatus = 'running' | 'success' | 'error';
 
@@ -50,17 +39,17 @@ export type HairTask = {
 
 export const HAIR_TEMPLATES_QUERY_KEY = ['hair-templates'] as const;
 
-/** Lists YouCam's predefined hairstyles. Uses no units. */
+/**
+ * Lists YouCam's predefined hairstyles. Uses no units. Only YouCam's own templates are ever
+ * returned: if the list can't be loaded this throws, and the gallery shows its retry state —
+ * editorial photos are never substituted, because a template id is sent to YouCam as is.
+ */
 export async function listHairTemplates(): Promise<HairTemplate[]> {
-  try {
-    const { templates } = await invokeEdgeFunction<{ templates: HairTemplate[] }>('hairstyle?list=templates', {
-      method: 'GET',
-    });
-    if (templates && templates.length > 0) return templates;
-  } catch {
-    // Return curated editorial templates if edge function is unreachable or offline
-  }
-  return [...FALLBACK_HAIR_TEMPLATES];
+  const { templates } = await invokeEdgeFunction<{ templates: HairTemplate[] }>('hairstyle?list=templates', {
+    method: 'GET',
+  });
+  if (!templates?.length) throw new Error('No hairstyles were returned.');
+  return templates;
 }
 
 /**

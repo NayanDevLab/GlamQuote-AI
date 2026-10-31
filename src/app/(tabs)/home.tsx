@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +11,7 @@ import { ComingSoonTile, StudioCard } from '@/components/ui/cards';
 import { IconButton } from '@/components/ui/icon-button';
 import { HOW_IT_WORKS_ICONS, StepList, type Step } from '@/components/ui/step-list';
 import { InlineNote, Overline, SectionHeader } from '@/components/ui/typography';
+import { LOOKBOOK_QUERY_KEY, listSavedLooks } from '@/features/lookbook/lookbook-api';
 
 const STEPS: Step[] = [
   { icon: HOW_IT_WORKS_ICONS[0], title: 'Discover', body: 'Find styles matching your preferences.' },
@@ -23,6 +25,9 @@ const STEPS: Step[] = [
 
 export default function Home() {
   const insets = useSafeAreaInsets();
+  // Same query as the Lookbook tab, so the count is the guest's real saved looks.
+  const { data: looks } = useQuery({ queryKey: LOOKBOOK_QUERY_KEY, queryFn: listSavedLooks });
+  const savedCount = looks?.length ?? 0;
 
   return (
     // The top inset sits on the fixed wrapper, not the scroll content, so nothing scrolls under the status bar.
@@ -103,22 +108,25 @@ export default function Home() {
         </View>
 
         <View className="gap-4 px-5 pt-10">
-          {/* Nothing can be saved until a studio produces a real YouCam preview. */}
-          <SectionHeader title="My Lookbook" note="0 saved" />
+          {/* Only saved YouCam previews count; the note waits for the real number. */}
+          <SectionHeader title="My Lookbook" note={looks ? `${savedCount} saved` : undefined} />
           <View className="items-center gap-3 rounded-lg bg-blush px-6 pb-6 pt-7">
             <LookbookTeaser />
-            <Text className="text-center font-serif text-title text-ink">
-              Your lookbook is waiting
+            {/* self-stretch: Android measures centred serif text too narrowly and clips the last word. */}
+            <Text className="self-stretch text-center font-serif text-title text-ink">
+              {savedCount ? 'Your looks are saved' : 'Your lookbook is waiting'}
             </Text>
             <Text className="max-w-[290px] text-center font-sans text-body-m text-muted">
-              Save the previews you like, compare them side by side, and keep your favourite here.
+              {savedCount
+                ? `${savedCount} ${savedCount === 1 ? 'preview' : 'previews'} in your Lookbook, ready to revisit or compare side by side.`
+                : 'Save the previews you like, compare them side by side, and keep your favourite here.'}
             </Text>
             <Button
-              label="Try your first look"
+              label={savedCount ? 'Open My Lookbook' : 'Try your first look'}
               variant="tonal"
               trailingIcon="arrowRight"
               className="mt-2"
-              onPress={() => router.navigate('/explore')}
+              onPress={() => router.navigate(savedCount ? '/lookbook' : '/explore')}
             />
           </View>
         </View>

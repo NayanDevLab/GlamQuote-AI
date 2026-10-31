@@ -75,14 +75,19 @@ export class PhotoUnavailableError extends Error {
   }
 }
 
-/** Resolves true if the photo file still exists. Prepared photos live in the app cache. */
-export async function isPhotoReadable(uri: string): Promise<boolean> {
+/** True if the photo file still exists. Prepared photos live in the app cache, which Android may clear. */
+export function photoExists(uri: string): boolean {
   try {
     const file = new File(uri);
     return file.exists && (file.size ?? 0) > 0;
   } catch {
     return false;
   }
+}
+
+/** Resolves true if the photo file still exists. Prepared photos live in the app cache. */
+export async function isPhotoReadable(uri: string): Promise<boolean> {
+  return photoExists(uri);
 }
 
 /**

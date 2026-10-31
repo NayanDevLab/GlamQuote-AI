@@ -12,6 +12,7 @@ import { ModeCard } from '@/components/ui/mode-card';
 import { Sheet } from '@/components/ui/sheet';
 import { Thumb } from '@/components/ui/thumb';
 import { useHairSession } from '@/features/hair/hair-session';
+import { photoExists } from '@/lib/photo';
 import { colors, shadows } from '@/theme';
 
 const TUTORIAL_STEPS = [
@@ -33,7 +34,8 @@ export default function HairStudio() {
   const markTutorialSeen = useHairSession((state) => state.markTutorialSeen);
   const hasSelfie = useHairSession((state) => state.selfie !== null);
   const attempt = useHairSession((state) => state.attempt);
-  const previews = useHairSession((state) => state.previews);
+  // Only previews whose original photo is still on this device (Android may clear the cache).
+  const previews = useHairSession((state) => state.previews).filter((preview) => photoExists(preview.selfie.uri));
   // Shown automatically on the first visit only; the ? replays it at any time.
   const [tutorialOpen, setTutorialOpen] = useState(!tutorialSeen);
 

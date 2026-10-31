@@ -13,7 +13,7 @@ import { authenticate, fail, json } from '../_shared/http.ts';
 import { HAIRSTYLE_LIMITS } from '../_shared/image.ts';
 import { createYouCamClient, YouCamError, type HairstyleTemplate } from '../_shared/youcam.ts';
 
-// Template ids are opaque provider strings; this only rejects obviously malformed input.
+// Template ids are opaque provider strings; this rejects malformed input before the list check.
 const TEMPLATE_ID_PATTERN = /^[\w.:\-]{1,128}$/;
 // The gallery shows at most this many pages of 20.
 const MAX_TEMPLATE_PAGES = 5;
@@ -22,28 +22,31 @@ const TEMPLATE_CACHE_MS = 30 * 60 * 1000;
 
 let templateCache: { at: number; templates: HairstyleTemplate[] } | null = null;
 
+/** YouCam's live template list (cached per instance). Listing uses no units. */
+async function loadTemplates(apiKey: string): Promise<HairstyleTemplate[]> {
+  if (templateCache && Date.now() - templateCache.at < TEMPLATE_CACHE_MS) return templateCache.templates;
+  const youcam = createYouCamClient(apiKey);
+  const templates: HairstyleTemplate[] = [];
+  let token: string | undefined;
+  for (let page = 0; page < MAX_TEMPLATE_PAGES; page++) {
+    const result = await youcam.listHairstyleTemplates(token);
+    templates.push(...result.templates);
+    if (!result.nextToken) break;
+    token = result.nextToken;
+  }
+  if (templates.length) templateCache = { at: Date.now(), templates };
+  return templates;
+}
+
 async function listTemplates(req: Request): Promise<Response> {
   const caller = await authenticate(req);
   if (caller instanceof Response) return caller;
 
-  if (templateCache && Date.now() - templateCache.at < TEMPLATE_CACHE_MS) {
-    return json({ templates: templateCache.templates });
-  }
   const apiKey = Deno.env.get('YOUCAM_API_KEY');
   if (!apiKey) return fail(502, 'provider_misconfigured', 'Previews are not configured correctly.');
-  const youcam = createYouCamClient(apiKey);
 
   try {
-    const templates: HairstyleTemplate[] = [];
-    let token: string | undefined;
-    for (let page = 0; page < MAX_TEMPLATE_PAGES; page++) {
-      const result = await youcam.listHairstyleTemplates(token);
-      templates.push(...result.templates);
-      if (!result.nextToken) break;
-      token = result.nextToken;
-    }
-    templateCache = { at: Date.now(), templates };
-    return json({ templates });
+    return json({ templates: await loadTemplates(apiKey) });
   } catch (error) {
     const failure = error instanceof YouCamError ? error.failure : 'unexpected_response';
     console.error('hairstyle template list failed', { failure });
@@ -57,6 +60,18 @@ const generation = serveGeneration({
   prepare: async (form) => {
     const templateId = form.get('template_id');
     if (typeof templateId !== 'string' || !TEMPLATE_ID_PATTERN.test(templateId)) {
+      return fail(422, 'template_unavailable', 'Choose a hairstyle from the gallery.');
+    }
+    // Only YouCam's own predefined templates can start a task — checked before any upload.
+    const apiKey = Deno.env.get('YOUCAM_API_KEY');
+    if (!apiKey) return fail(502, 'provider_misconfigured', 'Previews are not configured correctly.');
+    let known: HairstyleTemplate[];
+    try {
+      known = await loadTemplates(apiKey);
+    } catch {
+      return fail(503, 'provider_unavailable', 'Hairstyles could not be checked. Please try again shortly.');
+    }
+    if (!known.some((template) => template.id === templateId)) {
       return fail(422, 'template_unavailable', 'Choose a hairstyle from the gallery.');
     }
 

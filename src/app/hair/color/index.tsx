@@ -13,6 +13,7 @@ import { Thumb } from '@/components/ui/thumb';
 import { HairSwatch } from '@/features/hair-color/components';
 import { useHairColorSession } from '@/features/hair-color/hair-color-session';
 import type { HairColorMode } from '@/features/hair-color/presets';
+import { photoExists } from '@/lib/photo';
 import { colors, shadows } from '@/theme';
 
 const TUTORIAL_STEPS = [
@@ -66,7 +67,8 @@ export default function HairColorStudio() {
   const setMode = useHairColorSession((state) => state.setMode);
   const mode = useHairColorSession((state) => state.mode);
   const attempt = useHairColorSession((state) => state.attempt);
-  const previews = useHairColorSession((state) => state.previews);
+  // Only previews whose original photo is still on this device (Android may clear the cache).
+  const previews = useHairColorSession((state) => state.previews).filter((preview) => photoExists(preview.photo.uri));
   const [tutorialOpen, setTutorialOpen] = useState(!tutorialSeen);
 
   const closeTutorial = () => {
