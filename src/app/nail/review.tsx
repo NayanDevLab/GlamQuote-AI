@@ -214,7 +214,11 @@ export default function NailReview() {
               onPress={generate}
             />
             <Text className="text-center font-sans text-body-s text-muted">
-              {consent
+              {missing === 'hand'
+                ? 'Choose your hand photo again to continue. Nothing has been sent.'
+                : missing === 'reference'
+                ? 'Choose your nail design again to continue. Nothing has been sent.'
+                : consent
                 ? 'One preview per tap — the button locks while it works.'
                 : 'Tick the consent box to continue.'}
             </Text>

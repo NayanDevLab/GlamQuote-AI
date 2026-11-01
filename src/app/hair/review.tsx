@@ -193,7 +193,9 @@ export default function HairReview() {
           <>
             <Button label="Generate Hairstyle Preview" disabled={!consent || missing} onPress={generate} />
             <Text className="text-center font-sans text-body-s text-muted">
-              {consent
+              {missing
+                ? 'Choose your photo again to continue. Nothing has been sent.'
+                : consent
                 ? 'One preview per tap — the button locks while it works.'
                 : 'Tick the consent box to continue. Nothing is sent before you do.'}
             </Text>
