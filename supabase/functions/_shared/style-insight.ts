@@ -351,7 +351,9 @@ const MAX_TEXT = 320;
 const BLOCKED: [RegExp, string][] = [
   [/https?:|www\.|\]\(|```|\*\*|^#|\n#/i, 'link or markdown'],
   [
-    /\b(photo|photos|picture|image|images|selfie|i can see|i see|looking at your|in the preview|the preview shows)\b/i,
+    // "reference photo/image" names the design a Nail Transfer copied (and its saved title,
+    // "Your reference photo"), not a claim to see it; every other mention is still refused.
+    /\b(?<!reference )(photo|photos|picture|image|images)\b|\b(selfie|i can see|i see|looking at your|in the preview|the preview shows)\b/i,
     'claims to see images',
   ],
   [
